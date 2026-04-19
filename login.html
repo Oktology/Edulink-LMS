@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | Edulink</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="global.js"></script>
+
+    <script type="importmap">
+  {
+    "imports": {
+      "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
+      "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
+    }
+  }
+</script>
+</head>
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-6 transition-colors duration-500" id="body-bg">
+
+    <div class="bg-white w-full max-w-[1000px] flex rounded-3xl shadow-2xl overflow-hidden border border-slate-200">
+        
+        <div id="banner-side" class="hidden md:flex md:w-1/2 bg-blue-600 p-12 flex-col justify-between text-white relative overflow-hidden transition-colors duration-500">
+            <div class="relative z-10">
+                <h1 class="text-4xl font-black italic tracking-tighter">EduLink</h1>
+                <p id="teks-banner" class="mt-4 text-blue-100 leading-relaxed">Sistem manajemen kelas masa depan dengan dukungan kecerdasan buatan.</p>
+            </div>
+            
+            <div class="relative z-10">
+                <blockquote class="italic text-sm text-blue-200">"Pendidikan adalah senjata paling mematikan di dunia..."</blockquote>
+            </div>
+
+            <div class="absolute -right-16 -bottom-16 w-64 h-64 bg-white/10 rounded-full opacity-50"></div>
+            <div class="absolute -left-10 -top-10 w-40 h-40 bg-white/10 rounded-full opacity-50"></div>
+        </div>
+
+        <div class="w-full md:w-1/2 p-10 md:p-16 relative">
+            <div class="mb-8">
+                <h2 id="judul-form" class="text-3xl font-bold text-slate-800">Selamat Datang</h2>
+                <p id="sub-judul-form" class="text-slate-500 mt-2">Masuk untuk melanjutkan ke portal kamu.</p>
+            </div>
+
+            <form onsubmit="handleAuth(event)" class="space-y-5">
+                
+                <div class="flex bg-slate-100 p-1 rounded-xl gap-1 mb-2">
+                    <button type="button" onclick="setRole('mhs')" id="role-mhs" class="flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600">MAHASISWA</button>
+                    <button type="button" onclick="setRole('dsn')" id="role-dsn" class="flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-blue-600">DOSEN</button>
+                </div>
+
+                <div id="field-nama" class="hidden overflow-hidden transition-all duration-300">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Nama Lengkap</label>
+                    <input type="text" id="user-name" placeholder="Masukkan nama lengkap" 
+                        class="w-full mt-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition font-bold text-sm">
+                </div>
+
+                <div>
+                    <label id="label-id" class="text-xs font-black text-slate-400 uppercase tracking-widest">Nomor Induk Mahasiswa (NIM)</label>
+                    <input type="text" id="user-id" required placeholder="Masukkan NIM kamu" 
+                        class="w-full mt-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition font-bold tracking-widest text-sm">
+                </div>
+
+                <div>
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Kata Sandi</label>
+                    <input type="password" id="user-pass" required placeholder="••••••••" 
+                        class="w-full mt-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                </div>
+
+                <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 mt-4">
+                    Masuk ke Portal
+                </button>
+            </form>
+
+            <div class="mt-8 text-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <p id="teks-toggle" class="text-xs text-slate-500 font-medium">
+                    Belum punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Daftar sekarang</button>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    // --- 1. INISIALISASI DATABASE SIMULASI DI LOCALSTORAGE ---
+    // Biar data pendaftaran gak hilang kalau di-refresh
+    if (!localStorage.getItem('db_mhs')) {
+        localStorage.setItem('db_mhs', JSON.stringify({
+            "2026001": "Octoryo Qoffanus Shidqi",
+            "2026002": "Budi Santoso",
+            "12345": "Mahasiswa Tester"
+        }));
+    }
+    if (!localStorage.getItem('db_dsn')) {
+        localStorage.setItem('db_dsn', JSON.stringify({
+            "0612345": "Pak Dosen Informatika",
+            "001": "Admin Dosen"
+        }));
+    }
+
+    // --- 2. VARIABEL STATE ---
+    let currentRole = 'mhs';
+    let isLoginMode = true; // True = Mode Masuk, False = Mode Daftar
+
+    // --- 3. FUNGSI GANTI ROLE (MHS/DSN) ---
+    function setRole(role) {
+        currentRole = role;
+        const btnMhs = document.getElementById('role-mhs');
+        const btnDsn = document.getElementById('role-dsn');
+        const label = document.getElementById('label-id');
+        const input = document.getElementById('user-id');
+        const btnSubmit = document.getElementById('btn-submit');
+        const bannerSide = document.getElementById('banner-side');
+
+        if (role === 'mhs') {
+            btnMhs.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600";
+            btnDsn.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-blue-600";
+            label.innerText = "Nomor Induk Mahasiswa (NIM)";
+            input.placeholder = "Masukkan NIM kamu";
+            btnSubmit.className = "w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 mt-4";
+            bannerSide.classList.replace('bg-indigo-600', 'bg-blue-600');
+        } else {
+            btnDsn.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-indigo-600";
+            btnMhs.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-indigo-600";
+            label.innerText = "Nomor Induk Dosen (NIDN)";
+            input.placeholder = "Masukkan NIDN kamu";
+            btnSubmit.className = "w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 mt-4";
+            bannerSide.classList.replace('bg-blue-600', 'bg-indigo-600');
+        }
+    }
+
+    // --- 4. FUNGSI TOGGLE LOGIN / REGISTER ---
+    function toggleMode() {
+        isLoginMode = !isLoginMode;
+        
+        const judul = document.getElementById('judul-form');
+        const subJudul = document.getElementById('sub-judul-form');
+        const fieldNama = document.getElementById('field-nama');
+        const inputNama = document.getElementById('user-name');
+        const btnSubmit = document.getElementById('btn-submit');
+        const teksToggle = document.getElementById('teks-toggle');
+
+        if (isLoginMode) {
+            // MODE LOGIN
+            judul.innerText = "Selamat Datang";
+            subJudul.innerText = "Masuk untuk melanjutkan ke portal kamu.";
+            fieldNama.classList.add('hidden');
+            inputNama.removeAttribute('required');
+            btnSubmit.innerText = "Masuk ke Portal";
+            teksToggle.innerHTML = `Belum punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Daftar sekarang</button>`;
+        } else {
+            // MODE REGISTER
+            judul.innerText = "Daftar Akun";
+            subJudul.innerText = "Bergabung dengan EduLink hari ini.";
+            fieldNama.classList.remove('hidden');
+            inputNama.setAttribute('required', 'true');
+            btnSubmit.innerText = "Daftar Sekarang 🚀";
+            teksToggle.innerHTML = `Sudah punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Masuk di sini</button>`;
+        }
+    }
+
+    // --- 5. FUNGSI UTAMA (HANDLE LOGIN & REGISTER) ---
+    // --- 5. FUNGSI UTAMA (HANDLE LOGIN & REGISTER SMART MODE) ---
+    function handleAuth(event) {
+        event.preventDefault(); // Mencegah halaman refresh
+
+        const inputID = document.getElementById('user-id').value.trim();
+        const inputNama = document.getElementById('user-name').value.trim();
+
+        // Tarik kedua database sekaligus biar sistem lebih peka
+        let dbMhs = JSON.parse(localStorage.getItem('db_mhs'));
+        let dbDsn = JSON.parse(localStorage.getItem('db_dsn'));
+
+        if (isLoginMode) {
+            // LOGIC LOGIN PINTAR (SMART LOGIN)
+            if (currentRole === 'mhs' && dbMhs[inputID]) {
+                // Login normal Mhs
+                prosesMasuk(inputID, dbMhs[inputID], 'index.html');
+            } 
+            else if (currentRole === 'dsn' && dbDsn[inputID]) {
+                // Login normal Dosen
+                prosesMasuk(inputID, dbDsn[inputID], 'dosen.html');
+            } 
+            else if (currentRole === 'mhs' && dbDsn[inputID]) {
+                // Lupa klik tombol Dosen! Sistem otomatis bantu
+                alert("NIDN ini terdaftar sebagai DOSEN! Kita langsung arahkan ke Dashboard Dosen ya 🚀");
+                prosesMasuk(inputID, dbDsn[inputID], 'dosen.html');
+            } 
+            else if (currentRole === 'dsn' && dbMhs[inputID]) {
+                // Lupa klik tombol Mhs!
+                alert("NIM ini terdaftar sebagai MAHASISWA! Kita arahkan ke Portal Mahasiswa ya 🚀");
+                prosesMasuk(inputID, dbMhs[inputID], 'index.html');
+            } 
+            else {
+                // Beneran belum daftar
+                alert("Waduh, NIM/NIDN kamu belum terdaftar! Silakan klik 'Daftar sekarang' dulu ya.");
+            }
+
+        } else {
+            // LOGIC REGISTER
+            const dbKey = currentRole === 'mhs' ? 'db_mhs' : 'db_dsn';
+            let database = currentRole === 'mhs' ? dbMhs : dbDsn;
+
+            // Cek apakah ID udah ada di salah satu database biar ga dobel
+            if (dbMhs[inputID] || dbDsn[inputID]) {
+                alert("ID ini sudah pernah terdaftar! Silakan langsung login aja.");
+                toggleMode(); // Balikin ke mode masuk
+            } else {
+                // Tambahin user baru
+                database[inputID] = inputNama;
+                localStorage.setItem(dbKey, JSON.stringify(database));
+
+                alert("Pendaftaran berhasil! Selamat datang di EduLink 🚀");
+                prosesMasuk(inputID, inputNama, currentRole === 'mhs' ? 'index.html' : 'dosen.html');
+            }
+        }
+    }
+
+    // Fungsi pembantu biar kodenya bersih dan nggak diulang-ulang
+    function prosesMasuk(id, nama, halamanTujuan) {
+        localStorage.setItem('user_id', id);
+        localStorage.setItem('user_nama', nama);
+        
+        // 👉 INI DIA PENCATAT KTP-NYA
+        // Kalau tujuannya ke index.html, berarti dia Mahasiswa
+        if (halamanTujuan === 'index.html') {
+            localStorage.setItem('user_role', 'mahasiswa');
+        } else {
+            // Kalau tujuannya ke tempat lain, berarti dia Dosen
+            localStorage.setItem('user_role', 'dosen');
+        }
+        
+        document.getElementById('btn-submit').innerText = "Memproses...";
+        setTimeout(() => {
+            window.location.href = halamanTujuan;
+        }, 500);
+    }
+    </script>
+</body>
+</html>

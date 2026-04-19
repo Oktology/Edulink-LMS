@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detail Kelas | EduLink</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(10px); }
+    </style>
+    <script src="global.js"></script>
+</body>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+   <header id="header-kelas" class="transition-all duration-500 text-white pb-20 pt-8 px-10 shadow-lg relative">
+    <div class="max-w-7xl mx-auto flex justify-between items-center relative z-10">
+        <div class="flex items-center gap-6">
+            <a href="index.html" class="bg-white/10 hover:bg-white/20 p-2 rounded-full transition">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                </svg>
+            </a>
+            <div>
+                <h1 id="judul-kelas" class="text-3xl font-black tracking-tight">Memuat Kelas...</h1>
+            </div>
+        </div>
+        
+        <div class="text-left">
+            <p id="profile-name" class="text-xs font-bold italic">Memuat...</p>
+            <p id="profile-id" class="text-[10px] text-blue-200 uppercase tracking-tighter">NIM: --</p>
+        </div>
+    </div>
+    
+    <div class="absolute right-0 top-0 opacity-20 pointer-events-none">
+        <svg width="400" height="200" viewBox="0 0 400 200" fill="none">
+            <circle cx="350" cy="50" r="100" fill="white"/><circle cx="400" cy="150" r="80" fill="white"/>
+        </svg>
+    </div>
+</header>
+
+<main class="max-w-7xl mx-auto px-10 -mt-12 relative z-20 grid grid-cols-1 lg:grid-cols-3 gap-8 pb-20">
+    
+    <div class="lg:col-span-2 space-y-6">
+        <div id="daftar-tugas-cloud" class="space-y-6">
+            <section class="bg-white rounded-3xl p-10 border border-slate-200 shadow-sm text-center">
+                <div class="animate-spin inline-block w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+                <p class="text-xs text-slate-400 font-bold uppercase tracking-widest">Menghubungkan ke Edulink Cloud...</p>
+            </section>
+        </div>
+    </div>
+
+    <div class="space-y-8">
+        <section class="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Presensi Kehadiran</h3>
+                <span id="status-badge" class="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-tighter transition-all">Memuat...</span>
+            </div>
+            
+            <div id="area-presensi" class="space-y-3">
+                <div class="grid grid-cols-1 gap-2">
+                    <button onclick="pilihStatus('Hadir', this)" class="status-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-50 text-xs font-bold text-slate-600 hover:border-blue-500 transition-all flex justify-between items-center">
+                        <span>Hadir</span>
+                        <span class="dot h-2 w-2 rounded-full bg-slate-200"></span>
+                    </button>
+                    <button onclick="pilihStatus('Izin', this)" class="status-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-50 text-xs font-bold text-slate-600 hover:border-blue-500 transition-all flex justify-between items-center">
+                        <span>Izin</span>
+                        <span class="dot h-2 w-2 rounded-full bg-slate-200"></span>
+                    </button>
+                    <button onclick="pilihStatus('Sakit', this)" class="status-btn w-full text-left px-4 py-3 rounded-xl border-2 border-slate-50 text-xs font-bold text-slate-600 hover:border-blue-500 transition-all flex justify-between items-center">
+                        <span>Sakit</span>
+                        <span class="dot h-2 w-2 rounded-full bg-slate-200"></span>
+                    </button>
+                </div>
+                <button id="btn-submit-absen" onclick="submitAbsen()" disabled class="w-full bg-slate-200 text-slate-400 py-3.5 rounded-xl font-bold text-xs cursor-not-allowed transition-all shadow-sm mt-2">Kirim Kehadiran</button>
+            </div>
+        </section>
+
+                <div class="bg-white p-6 rounded-[40px] border border-slate-200 shadow-sm mt-6 flex flex-col h-[400px]">
+            <div class="flex items-center gap-3 mb-4 border-b border-slate-100 pb-4">
+                <div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center text-xl">🤖</div>
+                <div>
+                    <h3 class="text-sm font-bold text-slate-800">Edubot AI</h3>
+                    <p class="text-[9px] text-indigo-500 font-black tracking-widest uppercase">Asisten Belajar Aktif</p>
+                </div>
+            </div>
+
+            <div id="chat-history" class="flex-grow overflow-y-auto mb-4 space-y-3 pr-2 flex flex-col scrollbar-thin scrollbar-thumb-slate-200">
+                <div class="self-start bg-slate-50 border border-slate-100 p-4 rounded-2xl rounded-tl-none text-xs text-slate-600 max-w-[85%] leading-relaxed shadow-sm">
+                    Halo! Aku Edubot. Ada tugas atau materi kuliah yang bikin kamu bingung hari ini?
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-auto">
+                <input type="text" id="input-ai" onkeypress="if(event.key === 'Enter') tanyaAI()" placeholder="Tanya sesuatu ke Edubot..." 
+                    class="flex-grow p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs outline-none focus:border-indigo-500 transition-all font-medium">
+                <button onclick="tanyaAI()" class="bg-indigo-600 text-white px-5 py-4 rounded-2xl text-xs font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">
+                    Tanya
+                </button>
+            </div>
+        </div>
+    </div>
+</main>
+
+<div id="modal-upload-mahasiswa" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+    <div class="bg-white w-full max-w-md rounded-[32px] p-8 shadow-2xl">
+        <h3 class="text-xl font-black text-slate-800 mb-2">Kumpulkan Tugas</h3>
+        <p id="target-judul-tugas" class="text-xs text-indigo-500 font-bold mb-6 uppercase tracking-widest"></p>
+        
+        <div class="space-y-4">
+            <div onclick="document.getElementById('file-jawaban').click()" class="border-2 border-dashed border-slate-200 p-8 rounded-2xl text-center hover:bg-slate-50 cursor-pointer transition">
+                <div class="text-3xl mb-2">📤</div>
+                <p id="nama-file-jawaban" class="text-xs text-slate-400 font-bold">Pilih file tugasmu</p>
+                <input type="file" id="file-jawaban" class="hidden" onchange="document.getElementById('nama-file-jawaban').innerText = this.files[0].name">
+            </div>
+
+            <div id="progress-mhs" class="hidden w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                <div id="bar-mhs" class="bg-indigo-600 h-full w-0 transition-all"></div>
+            </div>
+
+            <button onclick="prosesKirimJawaban()" class="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold hover:bg-slate-800 transition shadow-lg">Kirim Jawaban</button>
+            <button onclick="tutupModalUpload()" class="w-full text-slate-400 text-xs font-bold py-2 hover:text-slate-600 transition">Batal</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    // 1. IMPORT FIREBASE
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+    // 2. CONFIG EDULINK
+    const firebaseConfig = {
+        apiKey: "AIzaSyCbPRP947C2OwPMaLSqWfbFCOLEkBBrx8c",
+        authDomain: "edulink-v2.firebaseapp.com",
+        databaseURL: "https://edulink-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "edulink-v2",
+        storageBucket: "edulink-v2.firebasestorage.app",
+        messagingSenderId: "450247433954",
+        appId: "1:450247433954:web:c3875535c4d1edc9a388bb"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
+    // Variabel state
+    let statusTerpilih = "";
+    let isAbsenOpenCloud = false;
+    let idTugasAktif = "";
+
+    // --- FUNGSI PILIH STATUS (HADIR/IZIN/SAKIT) ---
+    window.pilihStatus = function(status, element) {
+        if (!isAbsenOpenCloud) {
+            alert("Waduh, dosen belum membuka sesi absen untuk kelas ini!");
+            return;
+        }
+        document.querySelectorAll('.status-btn').forEach(btn => {
+            btn.classList.replace('border-blue-500', 'border-slate-50');
+            btn.querySelector('.dot').classList.replace('bg-blue-500', 'bg-slate-200');
+        });
+        statusTerpilih = status;
+        element.classList.replace('border-slate-50', 'border-blue-500');
+        element.querySelector('.dot').classList.replace('bg-slate-200', 'bg-blue-500');
+        const btnSubmit = document.getElementById('btn-submit-absen');
+        if(btnSubmit) {
+            btnSubmit.disabled = false;
+            btnSubmit.classList.replace('bg-slate-200', 'bg-blue-600');
+            btnSubmit.classList.replace('text-slate-400', 'text-white');
+            btnSubmit.classList.remove('cursor-not-allowed');
+        }
+    };
+
+    window.bukaModalUpload = function(idTugas, judul) {
+        idTugasAktif = idTugas;
+        document.getElementById('target-judul-tugas').innerText = judul;
+        document.getElementById('modal-upload-mahasiswa').classList.remove('hidden');
+    };
+
+    window.tutupModalUpload = () => {
+        document.getElementById('modal-upload-mahasiswa').classList.add('hidden');
+        idTugasAktif = "";
+    };
+
+    window.prosesKirimJawaban = async function() {
+        const fileInput = document.getElementById('file-jawaban');
+        const file = fileInput.files[0];
+        const namaMhs = localStorage.getItem('user_nama') || "Mahasiswa";
+        
+        // AMBIL KODE KELAS DARI kelas_mahasiswa
+        const namaKelasAktif = localStorage.getItem('kelasAktif');
+        const kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
+        const detail = kelasSaya.find(k => k.nama === namaKelasAktif);
+        const kodeKelas = detail ? (detail.kode || detail.joinCode) : null;
+
+        if (!file) return alert("Pilih filenya dulu!");
+        if (!kodeKelas) return alert("Aduh, kode kelas gak ketemu!");
+        if (!idTugasAktif) return alert("ID Tugas hilang!");
+
+        document.getElementById('progress-mhs').classList.remove('hidden');
+
+        try {
+            const formData = new FormData();
+            formData.append("file", file);
+            formData.append("upload_preset", "Edulink_upload");
+
+            const res = await fetch(`https://api.cloudinary.com/v1_1/dlsejywwa/upload`, {
+                method: "POST",
+                body: formData
+            });
+            
+            const data = await res.json();
+            if (!data.secure_url) throw new Error("Cloudinary gagal upload.");
+
+            const path = `jawaban_tugas/${kodeKelas}/${idTugasAktif}`;
+            await set(push(ref(db, path)), {
+                nama: namaMhs,
+                fileURL: data.secure_url,
+                waktu: new Date().toLocaleString('id-ID')
+            });
+
+            localStorage.setItem(`tugas_selesai_${idTugasAktif}`, 'true');
+            alert("Tugas kamu berhasil terkirim ke dosen! 🚀");
+            location.reload(); 
+        } catch (err) {
+            console.error(err);
+            alert("Gagal: " + err.message);
+            document.getElementById('progress-mhs').classList.add('hidden');
+        }
+    };
+
+    window.submitAbsen = function() {
+        const namaMhs = localStorage.getItem('user_nama');
+        const namaKelas = localStorage.getItem('kelasAktif');
+        const kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
+        const detailKelas = kelasSaya.find(k => k.nama === namaKelas);
+
+        if (!statusTerpilih) return alert("Pilih status dulu!");
+        const kode = detailKelas ? (detailKelas.kode || detailKelas.joinCode) : "NON-KODE";
+
+        const absenRef = ref(db, 'absensi/' + kode);
+        push(absenRef, {
+            nama: namaMhs,
+            status: statusTerpilih,
+            waktu: new Date().toLocaleTimeString(),
+            kodeMK: kode
+        }).then(() => {
+            localStorage.setItem(`sudah_absen_${kode}`, 'true'); 
+            localStorage.setItem(`waktu_absen_${kode}`, Date.now());
+            tampilkanPesanSuksesAbsen(namaMhs);
+        });
+    };
+
+    function tampilkanPesanSuksesAbsen(nama) {
+        document.getElementById('area-presensi').innerHTML = `
+            <div class="bg-green-50 border border-green-200 p-6 rounded-2xl text-center">
+                <span class="text-2xl">✅</span>
+                <p class="text-[10px] font-black text-green-600 uppercase mt-2">Presensi Berhasil</p>
+                <p class="text-xs font-bold text-green-800 italic">${nama}</p>
+                <p class="text-[10px] text-green-700 mt-1">Kamu sudah absen untuk sesi ini.</p>
+            </div>`;
+    }
+
+    // --- SCRIPT MESIN EDUBOT PINTER VIA VERCEL ---
+    window.tanyaAI = async function() {
+        const input = document.getElementById('input-ai');
+        const chatHistory = document.getElementById('chat-history');
+        const pertanyaan = input.value.trim();
+
+        if (!pertanyaan) return;
+
+        // 1. Tampilkan chat lo (Kanan)
+        chatHistory.innerHTML += `
+            <div class="self-end bg-blue-600 text-white p-4 rounded-2xl rounded-tr-none text-xs max-w-[85%] shadow-md leading-relaxed">
+                ${pertanyaan}
+            </div>`;
+        input.value = ""; 
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        // 2. Munculin titik-titik loading AI ngetik
+        const loadingId = "loading-" + Date.now();
+        chatHistory.innerHTML += `
+            <div id="${loadingId}" class="self-start bg-slate-50 border border-slate-100 p-4 rounded-2xl rounded-tl-none text-xs text-slate-400 italic max-w-[85%] flex items-center gap-2">
+                <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce"></div>
+                <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.1s"></div>
+                <div class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+            </div>`;
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        try {
+            // ⚠️ PENTING: GANTI URL DI BAWAH SAMA URL VERCEL LO ⚠️
+            const backendURL = "https://edulink-proxy-api.vercel.app/api/chat";
+
+            // 3. Nanya ke Server Vercel lo
+            const response = await fetch(backendURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pesan: pertanyaan })
+            });
+
+            const data = await response.json();
+            
+            // Hapus titik-titik loading
+            const loadingElement = document.getElementById(loadingId);
+            if(loadingElement) loadingElement.remove();
+
+            // 4. Tampilkan Jawaban AI (Kiri)
+            if (data.reply) {
+                let jawabanAI = data.reply.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>').replace(/\n/g, '<br>');
+                chatHistory.innerHTML += `
+                    <div class="self-start bg-indigo-50 border border-indigo-100 p-4 rounded-2xl rounded-tl-none text-xs text-indigo-800 max-w-[85%] shadow-sm leading-relaxed">
+                        ${jawabanAI}
+                    </div>`;
+            }
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        } catch (error) {
+            console.error(error);
+            const loadingElement = document.getElementById(loadingId);
+            if(loadingElement) loadingElement.remove();
+            chatHistory.innerHTML += `
+                <div class="self-start bg-red-50 border border-red-100 p-4 rounded-2xl rounded-tl-none text-xs text-red-600 max-w-[85%] shadow-sm leading-relaxed">
+                    Aduh, otak AI-ku lagi disconnect nih. Cek internet atau URL Vercel-nya ya! 😭
+                </div>`;
+        }
+    };
+
+    window.onload = function() {
+        const namaMhs = localStorage.getItem('user_nama') || "Mahasiswa";
+        const idMhs = localStorage.getItem('user_id') || "NIM --";
+        const namaKelasAktif = localStorage.getItem('kelasAktif');
+        
+        // POINT PENTING: Ambil dari kelas_mahasiswa
+        const kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
+        const detailKelas = kelasSaya.find(k => k.nama === namaKelasAktif);
+
+        if(document.getElementById('profile-name')) document.getElementById('profile-name').innerText = namaMhs;
+        if(document.getElementById('profile-id')) document.getElementById('profile-id').innerText = "NIM: " + idMhs;
+        
+        if (detailKelas) {
+            const kode = detailKelas.kode || detailKelas.joinCode;
+            document.getElementById('judul-kelas').innerText = detailKelas.nama;
+
+            // Update Tema Header
+            const header = document.getElementById('header-kelas');
+            if (header) {
+                header.classList.add(detailKelas.tema || 'bg-blue-600'); 
+            }
+
+            // 3A. LISTEN DAFTAR TUGAS
+            onValue(ref(db, 'tugas/' + kode), (snapshot) => {
+                const containerTugas = document.getElementById('daftar-tugas-cloud');
+                if (!containerTugas) return;
+                if (snapshot.exists()) {
+                    let listTugasHTML = "";
+                    const data = snapshot.val();
+                    Object.keys(data).reverse().forEach((key) => {
+                        const t = data[key];
+                        const sudahKirim = localStorage.getItem(`tugas_selesai_${key}`) === 'true';
+
+                        let deadlineWarna = "text-indigo-50 bg-indigo-500"; 
+                        let teksStatus = `📅 Diterbitkan: ${t.waktu}`;
+                        
+                        if (t.deadline && t.deadline !== "-") {
+                            const isOver = new Date() > new Date(t.deadline);
+                            if (sudahKirim) {
+                                deadlineWarna = "text-emerald-600 bg-emerald-50 border border-emerald-100";
+                                teksStatus = `✅ TERSAMPAIKAN`;
+                            } else if (isOver) {
+                                deadlineWarna = "text-red-600 bg-red-50 border border-red-100 animate-pulse";
+                                teksStatus = `⚠️ TERLEWAT: ${t.deadline.replace('T', ' ')}`;
+                            } else {
+                                deadlineWarna = "text-amber-600 bg-amber-50 border border-amber-100";
+                                teksStatus = `⏳ TENGGAT: ${t.deadline.replace('T', ' ')}`;
+                            }
+                        }
+
+                        const tombolHTML = sudahKirim 
+                            ? `<div class="w-full bg-emerald-600 text-white py-4 rounded-2xl font-black text-[10px] uppercase text-center tracking-[0.2em] shadow-lg shadow-emerald-100">Selesai Dikerjakan</div>`
+                            : `<button onclick="window.bukaModalUpload('${key}', '${t.judul.replace(/'/g, "\\'")}')" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100">📤 Kumpulkan Jawaban</button>`;
+
+                        listTugasHTML += `
+                            <div class="bg-white p-8 rounded-[40px] border ${sudahKirim ? 'border-emerald-200' : 'border-slate-200'} shadow-sm mb-6 transition-all">
+                                <div class="flex justify-between items-start mb-4 gap-4">
+                                    <h3 class="text-lg font-bold text-slate-800">${t.judul}</h3>
+                                    <span class="text-[9px] font-black ${deadlineWarna} px-3 py-1.5 rounded-full uppercase italic whitespace-nowrap">${teksStatus}</span>
+                                </div>
+                                <p class="text-xs text-slate-500 mb-6 leading-relaxed">${t.deskripsi || "Tidak ada instruksi tambahan."}</p>
+                                <div class="space-y-3">
+                                    ${t.fileURL ? `<a href="${t.fileURL}" target="_blank" class="block bg-slate-50 border border-slate-100 p-4 rounded-2xl text-[10px] font-black text-slate-700 uppercase">📄 Buka Materi Pendukung</a>` : ''}
+                                    ${tombolHTML}
+                                </div>
+                            </div>`;
+                    });
+                    containerTugas.innerHTML = listTugasHTML;
+                } else {
+                    containerTugas.innerHTML = `<div class="p-10 text-center text-slate-400 italic text-xs bg-white rounded-[40px] border border-slate-100">Belum ada tugas di kelas ini.</div>`;
+                }
+            });
+
+            // 3B. LISTEN STATUS ABSEN
+            onValue(ref(db, 'status_absen/' + kode), (snapshot) => {
+                const data = snapshot.val();
+                const badge = document.getElementById('status-badge');
+                const area = document.getElementById('area-presensi');
+                isAbsenOpenCloud = data ? data.isOpen : false;
+                
+                if (badge) {
+                    badge.innerText = isAbsenOpenCloud ? "Terbuka" : "Ditutup";
+                    badge.className = `px-2 py-0.5 rounded-full text-[9px] font-black uppercase ${isAbsenOpenCloud ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-500'}`;
+                }
+                if (area) {
+                    area.style.opacity = isAbsenOpenCloud ? "1" : "0.5";
+                    area.style.pointerEvents = isAbsenOpenCloud ? "auto" : "none";
+                }
+
+                if (localStorage.getItem(`sudah_absen_${kode}`) === 'true') {
+                    tampilkanPesanSuksesAbsen(namaMhs);
+                }
+            });
+        }
+    };
+
+    async function loadDataKelas() {
+        // 1. INI KUNCINYA: Ambil ID dari URL browser
+        const params = new URLSearchParams(window.location.search);
+        const idKelas = params.get('id'); 
+
+        if (!idKelas) {
+            console.error("Waduh, ID Kelas gak ada di URL!");
+            return;
+        }
+
+        // 2. Tarik data dari Firebase sesuai ID yang kita dapet tadi
+        try {
+            const snapshot = await get(ref(db, `database_kelas/${idKelas}`));
+            
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                
+                // 3. Masukin data ke HTML (Ganti ID-ID ini sesuai yang lo punya di HTML)
+                document.getElementById('nama-kelas-judul').innerText = data.nama;
+                document.getElementById('nama-dosen').innerText = data.dosen;
+                
+                
+                const header = document.getElementById('box-header');
+                if(header) {
+                    // Pake classList.add biar padding & rounded asli lo gak ilang!
+                    header.classList.add(data.tema || 'bg-blue-600');
+                }
+                
+                console.log("Berhasil pindah ke kelas:", data.nama);
+            }
+        } catch (error) {
+            console.error("Gagal narik data kelas:", error);
+        }
+    }
+
+    // Jalankan fungsinya
+    loadDataKelas();
+    
+</script>
+
+</body>
+</html> 
