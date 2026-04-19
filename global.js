@@ -18,8 +18,8 @@ function loadProfile() {
 
     if (!nama || !id) {
         // Cek apakah kita tidak sedang di halaman login agar tidak looping redirect
-        if (!window.location.pathname.includes('login.html')) {
-            window.location.href = 'login.html';
+        if (!window.location.pathname.includes('index.html')) {
+            window.location.href = 'index.html';
         }
         return;
     }
@@ -35,7 +35,7 @@ function loadProfile() {
 window.logout = function() {
     if (confirm("Yakin mau keluar?")) {
         localStorage.clear(); // Bersihkan semua biar aman
-        window.location.href = 'login.html';
+        window.location.href = 'index.html';
     }
 }
 
