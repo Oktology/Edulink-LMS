@@ -172,7 +172,7 @@
             // LOGIC LOGIN PINTAR (SMART LOGIN)
             if (currentRole === 'mhs' && dbMhs[inputID]) {
                 // Login normal Mhs
-                prosesMasuk(inputID, dbMhs[inputID], 'index.html');
+                prosesMasuk(inputID, dbMhs[inputID], 'dashboard.html');
             } 
             else if (currentRole === 'dsn' && dbDsn[inputID]) {
                 // Login normal Dosen
@@ -186,7 +186,7 @@
             else if (currentRole === 'dsn' && dbMhs[inputID]) {
                 // Lupa klik tombol Mhs!
                 alert("NIM ini terdaftar sebagai MAHASISWA! Kita arahkan ke Portal Mahasiswa ya 🚀");
-                prosesMasuk(inputID, dbMhs[inputID], 'index.html');
+                prosesMasuk(inputID, dbMhs[inputID], 'dashboard.html');
             } 
             else {
                 // Beneran belum daftar
@@ -220,7 +220,7 @@
         
         // 👉 INI DIA PENCATAT KTP-NYA
         // Kalau tujuannya ke index.html, berarti dia Mahasiswa
-        if (halamanTujuan === 'index.html') {
+        if (halamanTujuan === 'dashboard.html') {
             localStorage.setItem('user_role', 'mahasiswa');
         } else {
             // Kalau tujuannya ke tempat lain, berarti dia Dosen
