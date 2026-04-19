@@ -534,90 +534,144 @@
 
     // --- INISIALISASI ---
     window.pilihKelas = (kode) => {
-    const dbKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
-    const kelas = dbKelas.find(k => (k.kode || k.joinCode) === kode);
-    if (kelas) {
-        localStorage.setItem('kelas_dosen_aktif', JSON.stringify(kelas));
-        window.updateUIManajemen(kelas);
-    }
-};
-
-window.updateUIManajemen = function(kelas) {
-    const elJudul = document.getElementById('judul-kelas-aktif');
-    const elKode = document.getElementById('kode-mk-aktif');
-    
-    if(elJudul) elJudul.innerText = kelas.nama;
-    if(elKode) elKode.innerText = kelas.kode || kelas.joinCode;
-
-    // Pastikan fungsi-fungsi ini ada di script dosen_dashboard kamu yang lain
-    if (typeof window.refreshAbsen === "function") window.refreshAbsen();
-    if (typeof window.muatRiwayatTugas === "function") window.muatRiwayatTugas();
-};
-
-window.tampilkanKelasSidebar = function() {
-    const area = document.getElementById('daftar-kelas-sidebar');
-    const dbKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
-    
-    if (!area) return;
-    area.innerHTML = ""; 
-
-    if (dbKelas.length === 0) {
-        area.innerHTML = `<p class="px-3 text-[10px] text-slate-500 italic">Belum ada kelas.</p>`;
-        return;
-    }
-
-    dbKelas.forEach(k => {
-        const kode = k.kode || k.joinCode;
-        
-        // --- PERBAIKAN: Ganti masukKelas jadi pilihKelas ---
-        area.innerHTML += `
-            <div class="group flex items-center justify-between gap-3 px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer transition-all border border-transparent hover:border-white/10 mb-1">
-                <div onclick="pilihKelas('${kode}')" class="flex items-center gap-3 flex-grow overflow-hidden">
-                    <div class="w-2 h-2 rounded-full ${k.tema || 'bg-blue-500'}"></div>
-                    <div class="overflow-hidden">
-                        <p class="text-[10px] font-bold text-slate-200 truncate group-hover:text-white">${k.nama}</p>
-                        <p class="text-[8px] text-slate-500 font-bold uppercase">${kode}</p>
-                    </div>
-                </div>
-                
-                <button onclick="hapusKelas('${kode}')" class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded-lg transition-all">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                </button>
-            </div>
-        `;
-    });
-};
-
-   window.hapusKelas = function(kode) {
-    // 1. Ambil database dulu
-    let databaseKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
-    
-    // 2. Cari tahu dulu namanya SIAPA (Kenalan dulu di sini)
-    const infoKelas = databaseKelas.find(k => (k.kode || k.joinCode) === kode);
-    const namaKelas = infoKelas ? infoKelas.nama : kode; 
-
-    // 3. Baru deh munculin konfirmasi (Panggil namanya di sini)
-    if (confirm(` yakin mau hapus kelas? "${namaKelas}"? \n\nSemua data tugas & absen di Firebase tetap ada, tapi kelas ini akan hilang dari daftar dosen.`)) {
-        
-        // 4. Proses buang dari daftar
-        const databaseBaru = databaseKelas.filter(k => (k.kode || k.joinCode) !== kode);
-        
-        // 5. Simpan dan Refresh
-        localStorage.setItem('database_kelas', JSON.stringify(databaseBaru));
-        
-        alert(`Kelas "${namaKelas}" berhasil dihapus! 🗑️`);
-        location.reload();
-    }
-};
-
-    window.onload = () => {
-        document.getElementById('dosen-profile-name').innerHTML = `Dosen: <b class="text-white">${localStorage.getItem('user_nama') || 'User'}</b>`;
-        window.tampilkanKelasSidebar();
-        const last = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-        if (last) window.updateUIManajemen(last);
+        const dbKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
+        const kelas = dbKelas.find(k => (k.kode || k.joinCode) === kode);
+        if (kelas) {
+            localStorage.setItem('kelas_dosen_aktif', JSON.stringify(kelas));
+            window.updateUIManajemen(kelas);
+        }
     };
+
+    window.updateUIManajemen = function(kelas) {
+        const elJudul = document.getElementById('judul-kelas-aktif');
+        const elKode = document.getElementById('kode-mk-aktif');
+        
+        if(elJudul) elJudul.innerText = kelas.nama;
+        if(elKode) elKode.innerText = kelas.kode || kelas.joinCode;
+
+        if (typeof window.refreshAbsen === "function") window.refreshAbsen();
+        if (typeof window.muatRiwayatTugas === "function") window.muatRiwayatTugas();
+    };
+
+    window.tampilkanKelasSidebar = function() {
+        const area = document.getElementById('daftar-kelas-sidebar');
+        const dbKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
+        
+        if (!area) return;
+        area.innerHTML = ""; 
+
+        if (dbKelas.length === 0) {
+            area.innerHTML = `<p class="px-3 text-[10px] text-slate-500 italic">Belum ada kelas.</p>`;
+            return;
+        }
+
+        dbKelas.forEach(k => {
+            const kode = k.kode || k.joinCode;
+            area.innerHTML += `
+                <div class="group flex items-center justify-between gap-3 px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer transition-all border border-transparent hover:border-white/10 mb-1">
+                    <div onclick="pilihKelas('${kode}')" class="flex items-center gap-3 flex-grow overflow-hidden">
+                        <div class="w-2 h-2 rounded-full ${k.tema || 'bg-blue-500'}"></div>
+                        <div class="overflow-hidden">
+                            <p class="text-[10px] font-bold text-slate-200 truncate group-hover:text-white">${k.nama}</p>
+                            <p class="text-[8px] text-slate-500 font-bold uppercase">${kode}</p>
+                        </div>
+                    </div>
+                    
+                    <button onclick="hapusKelas('${kode}')" class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded-lg transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                    </button>
+                </div>
+            `;
+        });
+    };
+
+    // 🚨 PERBAIKAN: HAPUS KELAS LANGSUNG DARI FIREBASE (AWAN) 🚨
+    window.hapusKelas = async function(kode) {
+        let databaseKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
+        const infoKelas = databaseKelas.find(k => (k.kode || k.joinCode) === kode);
+        const namaKelas = infoKelas ? infoKelas.nama : kode; 
+
+        if (confirm(`Yakin mau hapus kelas "${namaKelas}"? \n\nSemua data di Firebase akan ikut terhapus secara permanen!`)) {
+            try {
+                // 1. Hapus dari database server Firebase
+                await remove(ref(db, `database_kelas/${kode}`));
+                
+                // 2. Bersihkan lokal & refresh
+                const databaseBaru = databaseKelas.filter(k => (k.kode || k.joinCode) !== kode);
+                localStorage.setItem('database_kelas', JSON.stringify(databaseBaru));
+                
+                // Kalau kelas yang lagi dibuka yang dihapus, reset kelas_dosen_aktif
+                const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
+                if (kelasAktif && (kelasAktif.kode || kelasAktif.joinCode) === kode) {
+                    localStorage.removeItem('kelas_dosen_aktif');
+                }
+
+                alert(`Kelas "${namaKelas}" berhasil dihapus dari server! 🗑️`);
+                location.reload();
+            } catch (error) {
+                alert("Gagal menghapus kelas dari server: " + error.message);
+            }
+        }
+    };
+
+    // 🚨 PERBAIKAN: MASTER INITIALISASI (SATPAM + SINKRONISASI CLOUD) 🚨
+    const startAppDosen = async () => {
+        // --- 1. SATPAM PINTU MASUK DOSEN ---
+        const userRole = localStorage.getItem('user_role');
+        if (!userRole) {
+            alert("Sesi berakhir. Silakan login kembali.");
+            window.location.href = "index.html"; 
+            return; 
+        }
+        if (userRole === 'mahasiswa') {
+            window.location.href = "dashboard.html"; // Tendang balik mahasiswa
+            return; 
+        }
+
+        const namaDosen = localStorage.getItem('user_nama') || 'Dosen';
+        document.getElementById('dosen-profile-name').innerHTML = `Dosen: <b class="text-white">${namaDosen}</b>`;
+
+        // --- 2. SINKRONISASI CLOUD: TARIK KELAS MILIK DOSEN INI ---
+        try {
+            const snapshot = await get(ref(db, 'database_kelas'));
+            let kelasDosenIni = [];
+            
+            if (snapshot.exists()) {
+                const semuaKelas = snapshot.val();
+                // Saring cuma kelas yang dibikin sama dosen ini
+                for (const key in semuaKelas) {
+                    if (semuaKelas[key].dosen === namaDosen) {
+                        let kls = semuaKelas[key];
+                        kls.kode = key; 
+                        kelasDosenIni.push(kls);
+                    }
+                }
+            }
+            // Simpan ke lokal biar UI gampang ngebacanya
+            localStorage.setItem('database_kelas', JSON.stringify(kelasDosenIni));
+        } catch (error) {
+            console.error("Gagal menarik data kelas dari Firebase:", error);
+        }
+
+        // --- 3. RENDER TAMPILAN ---
+        window.tampilkanKelasSidebar();
+        
+        // Panggil kelas terakhir yang dibuka (kalau ada dan valid)
+        const last = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
+        const dbKelasUpdate = JSON.parse(localStorage.getItem('database_kelas')) || [];
+        
+        if (last && dbKelasUpdate.some(k => (k.kode || k.joinCode) === (last.kode || last.joinCode))) {
+            window.updateUIManajemen(last);
+        } else if (dbKelasUpdate.length > 0) {
+            // Kalau nggak ada history, otomatis buka kelas pertama
+            window.pilihKelas(dbKelasUpdate[0].kode || dbKelasUpdate[0].joinCode);
+        }
+    };
+
+    // Jalankan mesin utama
+    startAppDosen();
 
     window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('sidebar-closed');
     window.tampilkanNamaFile = (input) => { if (input.files[0]) document.getElementById('nama-file-terpilih').innerText = input.files[0].name; };
