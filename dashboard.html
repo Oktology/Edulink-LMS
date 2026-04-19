@@ -80,9 +80,12 @@
 <script>
     function logout() {
         if(confirm("Apakah kamu yakin ingin keluar ?")) {
-            // Hapus data login sementara (optional)
-            localStorage.clear();
-            // Pindah ke login
+            // Hapus KTP sesinya saja satu per satu (pakai pinset)
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_nama');
+            
+            // Pindah ke halaman login
             window.location.href = "index.html";
         }
     }
