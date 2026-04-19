@@ -32,12 +32,17 @@ function loadProfile() {
 }
 
 // 3. FUNGSI LOGOUT
-window.logout = function() {
-    if (confirm("Yakin mau keluar?")) {
-        localStorage.clear(); // Bersihkan semua biar aman
-        window.location.href = 'index.html';
+function logout() {
+        if(confirm("Apakah kamu yakin ingin keluar ?")) {
+            // Hapus KTP sesinya saja satu per satu (pakai pinset)
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_nama');
+            
+            // Pindah ke halaman login
+            window.location.href = "index.html";
+        }
     }
-}
 
 // Otomatis jalan
 document.addEventListener('DOMContentLoaded', loadProfile);
