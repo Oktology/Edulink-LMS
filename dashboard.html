@@ -209,10 +209,11 @@
     </div>
 
 <script type="module">
-    import { initializeApp } from "firebase/app";
-    import { getDatabase, ref, get, set } from "firebase/database";
+    // 1. IMPORT WAJIB PAKAI LINK CDN (BIAR JALAN DI GITHUB PAGES)
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-    // 1. Firebase Config
+    // 2. Firebase Config (Sesuai punya lo)
     const firebaseConfig = {
         apiKey: "AIzaSyCbPRP947C2OwPMaLSqWfbFCOLEkBBrx8c",
         authDomain: "edulink-v2.firebaseapp.com",
@@ -226,12 +227,11 @@
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
 
-    // --- FUNGSI TANYA AI VIA POPUP (BARU) ---
+    // --- FUNGSI TANYA AI VIA POPUP ---
     window.bukaChatModal = () => {
         const modal = document.getElementById('edubot-modal');
         const content = document.getElementById('edubot-modal-content');
         modal.classList.remove('hidden');
-        // Delay dikit biar transisinya jalan (animasi fade in & pop)
         setTimeout(() => {
             modal.classList.remove('opacity-0');
             content.classList.remove('scale-95');
@@ -243,13 +243,12 @@
         const content = document.getElementById('edubot-modal-content');
         modal.classList.add('opacity-0');
         content.classList.add('scale-95');
-        // Tunggu animasi selesai baru di-hide
         setTimeout(() => {
             modal.classList.add('hidden');
         }, 300);
     };
 
-    // --- SCRIPT MESIN EDUBOT PINTER VIA VERCEL ---
+    // --- SCRIPT MESIN EDUBOT ---
     window.tanyaAI = async function() {
         const input = document.getElementById('input-ai');
         const chatHistory = document.getElementById('chat-history');
@@ -257,7 +256,6 @@
 
         if (!pertanyaan) return;
 
-        // 1. Tampilkan chat mahasiswa
         chatHistory.innerHTML += `
             <div class="self-end bg-blue-600 text-white p-4 rounded-2xl rounded-tr-none text-xs max-w-[85%] shadow-md leading-relaxed animate-[fadeIn_0.3s_ease-in-out]">
                 ${pertanyaan}
@@ -265,7 +263,6 @@
         input.value = ""; 
         chatHistory.scrollTop = chatHistory.scrollHeight;
 
-        // 2. Munculin animasi loading bot
         const loadingId = "loading-" + Date.now();
         chatHistory.innerHTML += `
             <div id="${loadingId}" class="self-start bg-slate-50 border border-slate-100 p-4 rounded-2xl rounded-tl-none text-xs text-slate-400 italic max-w-[85%] flex items-center gap-2">
@@ -276,9 +273,7 @@
         chatHistory.scrollTop = chatHistory.scrollHeight;
 
         try {
-            // ⚠️ PENTING: GANTI URL DI BAWAH SAMA URL VERCEL LO ⚠️
             const backendURL = "https://edulink-proxy-api.vercel.app/api/chat";
-
             const response = await fetch(backendURL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -286,7 +281,6 @@
             });
 
             const data = await response.json();
-            
             const loadingElement = document.getElementById(loadingId);
             if(loadingElement) loadingElement.remove();
 
@@ -309,7 +303,8 @@
                 </div>`;
         }
     };
-    // --- FUNGSI REFRESH DASHBOARD ANIMASI (BARU) ---
+
+    // --- FUNGSI REFRESH DASHBOARD ---
     window.refreshDashboard = async function() {
         const btn = document.getElementById('btn-refresh');
         const originalText = btn.innerText;
@@ -317,9 +312,9 @@
         btn.innerText = "MEMUAT...";
         btn.classList.add("opacity-50", "cursor-wait");
 
-        tampilkanKelasMahasiswa();
+        window.tampilkanKelasMahasiswa();
         window.tampilkanKelasSidebar(); 
-        await muatJadwalDashboard();
+        await window.muatJadwalDashboard();
 
         const kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
         if (document.getElementById('total-kelas-count')) {
@@ -340,7 +335,7 @@
         }, 500);
     };
 
-    // --- FUNGSI GLOBAL LAMA (JANGAN DISENTUH) ---
+    // --- FUNGSI GLOBAL ---
     window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('sidebar-closed');
 
     window.pindahKeKelas = (namaKelas) => {
@@ -357,36 +352,30 @@
         btnJoin.innerText = "MENCARI...";
 
         try {
-            // 1. Tarik data kelas LANGSUNG dari Firebase
             const snapshot = await get(ref(db, 'database_kelas'));
             
             if (snapshot.exists()) {
                 const semuaKelas = snapshot.val();
                 let kelasDitemukan = null;
 
-                // 2. Cari kelas yang kodenya cocok sama inputan mahasiswa
                 for (const key in semuaKelas) {
                     if (semuaKelas[key].joinCode === inputCode || semuaKelas[key].kode === inputCode || key === inputCode) {
                         kelasDitemukan = semuaKelas[key];
-                        // Simpan key aslinya biar gampang dicari nanti
                         kelasDitemukan.kode = key; 
                         break;
                     }
                 }
 
                 if (kelasDitemukan) {
-                    // 3. Cek apakah mahasiswa udah join kelas ini sebelumnya
                     let kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
                     if (kelasSaya.some(k => (k.kode || k.joinCode) === kelasDitemukan.kode)) {
                         btnJoin.innerText = teksAsli;
                         return alert("Kamu sudah bergabung di kelas ini!");
                     }
 
-                    // 4. Masukkan ke daftar kelas mahasiswa di LOKAL
                     kelasSaya.push(kelasDitemukan);
                     localStorage.setItem('kelas_mahasiswa', JSON.stringify(kelasSaya));
                     
-                    // 👉 5. SIMPAN JUGA KE AWAN (FIREBASE) BIAR GAK ILANG PAS GANTI DEVICE! ☁️
                     const idAktif = localStorage.getItem('user_id');
                     if (idAktif) {
                         await set(ref(db, `mahasiswa/${idAktif}/kelas`), kelasSaya);
@@ -394,9 +383,8 @@
                     
                     alert(`Berhasil join ke kelas: ${kelasDitemukan.nama}\nDosen Pengampu: ${kelasDitemukan.dosen}`);
                     
-                    // 6. Bersihkan input dan refresh tampilan
                     document.getElementById('join-code').value = "";
-                    tampilkanKelasMahasiswa();
+                    window.tampilkanKelasMahasiswa();
                     window.tampilkanKelasSidebar();
                     await window.muatJadwalDashboard();
                 } else {
@@ -459,11 +447,19 @@
         });
     };
 
-    window.keluarKelas = function(kode) {
+    // 🚨 RANJAU 3: UPDATE FUNGSI KELUAR KELAS (BIAR TERHAPUS DI AWAN) 🚨
+    window.keluarKelas = async function(kode) {
         let kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
         const infoKelas = kelasSaya.find(k => (k.kode || k.joinCode) === kode);
-        if (confirm(` yakin mau keluar dari kelas "${infoKelas ? infoKelas.nama : kode}"?`)) {
-            localStorage.setItem('kelas_mahasiswa', JSON.stringify(kelasSaya.filter(k => (k.kode || k.joinCode) !== kode)));
+        
+        if (confirm(`Yakin mau keluar dari kelas "${infoKelas ? infoKelas.nama : kode}"?`)) {
+            const sisaKelas = kelasSaya.filter(k => (k.kode || k.joinCode) !== kode);
+            localStorage.setItem('kelas_mahasiswa', JSON.stringify(sisaKelas));
+            
+            const idAktif = localStorage.getItem('user_id');
+            if (idAktif) {
+                await set(ref(db, `mahasiswa/${idAktif}/kelas`), sisaKelas);
+            }
             location.reload(); 
         }
     };
@@ -471,13 +467,11 @@
     window.muatJadwalDashboard = async function() {
         const container = document.getElementById('container-jadwal');
         if (!container) return;
-
         container.innerHTML = ""; 
 
         const kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
         const daftarHari = ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"];
         const hariIni = daftarHari[new Date().getDay()];
-
         let ditemukan = false;
 
         for (const kls of kelasSaya) {
@@ -486,13 +480,10 @@
 
             try {
                 const snapshot = await get(ref(db, `database_kelas/${kode}`));
-                
                 if (snapshot.exists()) {
                     const data = snapshot.val();
-                    
                     if (data.hari === hariIni) {
                         ditemukan = true;
-                        
                         container.innerHTML += `
                             <div class="group flex items-center justify-between p-3 rounded-2xl bg-slate-50/50 hover:bg-white border border-transparent hover:border-slate-200 hover:shadow-sm transition-all duration-200 mb-2 last:mb-0">
                                 <div class="flex items-center gap-4 min-w-0">
@@ -501,20 +492,14 @@
                                         <p class="text-[7px] font-bold text-slate-400 mt-1 uppercase">WIB</p>
                                     </div>
                                     <div class="truncate">
-                                        <h4 class="text-[12px] font-black text-slate-700 group-hover:text-blue-600 transition truncate tracking-tight uppercase">
-                                            ${data.nama}
-                                        </h4>
-                                        <p class="text-[9px] font-bold text-slate-400 truncate tracking-tight uppercase">
-                                            ${data.dosen || 'Dosen Pengampu'}
-                                        </p>
+                                        <h4 class="text-[12px] font-black text-slate-700 group-hover:text-blue-600 transition truncate tracking-tight uppercase">${data.nama}</h4>
+                                        <p class="text-[9px] font-bold text-slate-400 truncate tracking-tight uppercase">${data.dosen || 'Dosen Pengampu'}</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <div class="w-1.5 h-6 rounded-full ${data.tema || 'bg-blue-600'} opacity-40 group-hover:opacity-100 transition-opacity"></div>
                                     <button onclick="pindahKeKelas('${data.nama}')" class="p-1.5 rounded-lg text-slate-300 group-hover:text-slate-900 group-hover:bg-slate-100 transition-all">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" />
-                                        </svg>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7" /></svg>
                                     </button>
                                 </div>
                             </div>`;
@@ -536,49 +521,38 @@
 
    // --- INISIALISASI ---
     const startApp = async () => {
-        // =======================================================
-        // 🚨 SATPAM PINTU MASUK MAHASISWA 🚨
-        // =======================================================
         const userRole = localStorage.getItem('user_role');
         
-        // 1. Kalau belum login sama sekali, tendang ke halaman login (index.html)
         if (!userRole) {
             alert("Sesi berakhir. Silakan login kembali.");
             window.location.href = "index.html"; 
             return; 
         }
         
-        // 2. Kalau yang masuk ternyata Dosen, arahin ke dashboard Dosen
         if (userRole === 'dosen') {
             window.location.href = "dashboard-dosen.html"; 
             return; 
         }
-        // =======================================================
 
         const namaAktif = localStorage.getItem('user_nama') || "Mahasiswa";
         const idAktif = localStorage.getItem('user_id') || "2026000";
 
-        // =======================================================
-        // ☁️ SINKRONISASI DATA KELAS DARI FIREBASE ☁️
-        // =======================================================
         try {
-            // Ambil data terbaru dari server berdasarkan ID mahasiswa
             const snapshot = await get(ref(db, `mahasiswa/${idAktif}/kelas`));
             
             if (snapshot.exists()) {
-                // Jika di server ada data, timpa memori lokal agar sinkron
-                localStorage.setItem('kelas_mahasiswa', JSON.stringify(snapshot.val()));
+                let dataFirebase = snapshot.val();
+                
+                // 🚨 RANJAU 2: Pastikan data yang ditarik jadi Array yang aman 🚨
+                let dataAman = Array.isArray(dataFirebase) ? dataFirebase : Object.values(dataFirebase);
+                localStorage.setItem('kelas_mahasiswa', JSON.stringify(dataAman));
             } else {
-                // Jika di server belum ada (mahasiswa baru), kosongkan lokal
                 localStorage.setItem('kelas_mahasiswa', JSON.stringify([]));
             }
         } catch (error) {
             console.error("Gagal sinkronisasi awan:", error);
-            // Jika gagal ambil data (misal internet mati), gunakan data lokal yang ada saja
         }
-        // =======================================================
 
-        // --- UPDATE UI DASHBOARD ---
         const elUserInfo = document.getElementById('sidebar-user-info');
         if (elUserInfo) elUserInfo.innerHTML = `<p class="text-[11px] font-bold text-white truncate">${namaAktif}</p><p class="text-[9px] text-slate-500 font-medium">${idAktif}</p>`;
         
@@ -589,17 +563,17 @@
         if(document.getElementById('info-hari')) document.getElementById('info-hari').innerText = hariIni.toLocaleDateString('id-ID', { weekday: 'long' });
         if(document.getElementById('info-tanggal')) document.getElementById('info-tanggal').innerText = hariIni.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
 
-        // Hitung total kelas terbaru setelah sinkronisasi
         const kelasSaya = JSON.parse(localStorage.getItem('kelas_mahasiswa')) || [];
         if (document.getElementById('total-kelas-count')) document.getElementById('total-kelas-count').innerText = kelasSaya.length;
 
-        // Render Tampilan
-        tampilkanKelasMahasiswa();
-        tampilkanKelasSidebar();
-        await muatJadwalDashboard();
+        // Pastikan pakai window. biar nggak tersesat!
+        window.tampilkanKelasMahasiswa();
+        window.tampilkanKelasSidebar();
+        await window.muatJadwalDashboard();
     };
 
     startApp();
+
 </script>
 </body>
 </html>
