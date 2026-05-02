@@ -556,13 +556,15 @@
  // ==========================================
     // LOAD KEAKTIFAN MAHASISWA (RUMUS ASLI 100%)
     // ==========================================
+    // ==========================================
+    // LOAD KEAKTIFAN + EARLY WARNING SYSTEM
+    // ==========================================
     async function loadKeaktifanMahasiswa() {
         if (!kelasTerpilih) return;
         const container = document.getElementById('daftar-keaktifan');
-        container.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm animate-pulse">Menghitung keaktifan nyata... 🧮</div>';
+        container.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm animate-pulse">Menghitung keaktifan & memindai risiko... 🧮</div>';
         
         try {
-            // 1. Ambil daftar mahasiswa yang gabung di kelas ini
             const mhsSnap = await get(ref(db, `mahasiswa`));
             const listMhs = [];
             
@@ -581,94 +583,106 @@
                 return;
             }
 
-            // 2. Ambil TOTAL TUGAS yang udah dibikin sama dosen di kelas ini
             const tugasSnap = await get(ref(db, `tugas/${kelasTerpilih}`));
             let totalTugas = 0;
             let listIdTugas = [];
-            
             if (tugasSnap.exists()) {
-                const dataTugas = tugasSnap.val();
-                listIdTugas = Object.keys(dataTugas);
+                listIdTugas = Object.keys(tugasSnap.val());
                 totalTugas = listIdTugas.length;
             }
             
             let totalSemuaKeaktifan = 0;
             const dataFinal = [];
+            let jumlahKritis = 0; // Buat ngitung yang mau gagal
 
-           // 3. Hitung persentase masing-masing mahasiswa
             for (const m of listMhs) {
                 let tugasSelesai = 0;
+                let totalNilaiDapat = 0;
+                let jumlahTugasDinilai = 0;
                 
-                // Cek ke dalam Firebase, berapa tugas yang udah dia setor?
                 if (totalTugas > 0) {
                     for (const idTugas of listIdTugas) {
-                        // Tarik SEMUA jawaban di tugas ini dulu
                         const jawabanSnap = await get(ref(db, `jawaban_tugas/${kelasTerpilih}/${idTugas}`));
-                        
                         if (jawabanSnap.exists()) {
-                            let sudahNgerjain = false;
                             const semuaJawaban = jawabanSnap.val();
-                            
-                            // Cek satu-satu: Cocokin pakai NIM (Sistem Baru) ATAU Nama (Sistem Lama)
                             for (const keyJawaban in semuaJawaban) {
                                 const dataJawab = semuaJawaban[keyJawaban];
                                 if (keyJawaban === m.nim || dataJawab.nim === m.nim || dataJawab.nama === m.nama) {
-                                    sudahNgerjain = true;
+                                    tugasSelesai++;
+                                    // Hitung nilai juga buat parameter AI
+                                    if (dataJawab.nilai !== undefined && dataJawab.nilai !== "") {
+                                        totalNilaiDapat += parseInt(dataJawab.nilai);
+                                        jumlahTugasDinilai++;
+                                    }
                                     break;
                                 }
-                            }
-                            
-                            if (sudahNgerjain) {
-                                tugasSelesai++;
                             }
                         }
                     }
                 }
                 
-                // RUMUS ASLI: (Tugas Selesai / Total Tugas) * 100%
                 let nilaiKeaktifan = totalTugas === 0 ? 0 : Math.round((tugasSelesai / totalTugas) * 100);
+                let rataNilai = jumlahTugasDinilai === 0 ? 0 : Math.round(totalNilaiDapat / jumlahTugasDinilai);
                 
-                // Update keaktifannya di database biar terekam
                 await set(ref(db, `keaktifan/${kelasTerpilih}/${m.nim}`), { nilai: nilaiKeaktifan });
 
+                // 🔥 LOGIKA EARLY WARNING SYSTEM 🔥
+                let ewLabel = "Aman";
+                let ewBadge = "bg-emerald-100 text-emerald-700 border border-emerald-200";
+                
+                // Kritis: Keaktifan di bawah 40% ATAU Nilai Rata-rata di bawah 50
+                if (nilaiKeaktifan < 40 || (rataNilai > 0 && rataNilai < 50)) {
+                    ewLabel = "Kritis";
+                    ewBadge = "bg-red-100 text-red-700 border border-red-200 animate-pulse";
+                    jumlahKritis++;
+                } 
+                // Waspada: Keaktifan 40-69% ATAU Nilai Rata-rata 50-69
+                else if (nilaiKeaktifan < 70 || (rataNilai > 0 && rataNilai < 70)) {
+                    ewLabel = "Waspada";
+                    ewBadge = "bg-amber-100 text-amber-700 border border-amber-200";
+                }
+
                 totalSemuaKeaktifan += nilaiKeaktifan;
-                dataFinal.push({ ...m, nilai: nilaiKeaktifan, tugasSelesai, totalTugas });
+                dataFinal.push({ ...m, nilai: nilaiKeaktifan, tugasSelesai, totalTugas, rataNilai, ewLabel, ewBadge });
             }
             
-            // Urutkan dari mahasiswa yang paling rajin (nilai tertinggi)
-            dataFinal.sort((a, b) => b.nilai - a.nilai);
+            dataFinal.sort((a, b) => a.nilai - b.nilai); // Yang kritis ditaruh di atas!
             
-            // Hitung rata-rata kelas
             const rataRata = Math.round(totalSemuaKeaktifan / listMhs.length);
             document.getElementById('rata-keaktifan-kelas').innerText = rataRata + '%';
             
-            // 4. Render ke Layar
             container.innerHTML = dataFinal.map(m => {
-                let w = 'bg-red-500', s = '🔴 Kurang Aktif';
-                if (m.nilai >= 80) { w = 'bg-emerald-500'; s = '🟢 Sangat Aktif'; }
-                else if (m.nilai >= 60) { w = 'bg-blue-500'; s = '🔵 Cukup Aktif'; }
-                else if (m.nilai >= 40) { w = 'bg-yellow-500'; s = '🟡 Mulai Bergerak'; }
+                let w = 'bg-emerald-500';
+                if (m.ewLabel === 'Kritis') w = 'bg-red-500';
+                if (m.ewLabel === 'Waspada') w = 'bg-yellow-500';
                 
                 return `
-                    <div class="p-4 hover:bg-slate-50 transition-all">
-                        <div class="flex justify-between items-center mb-2">
+                    <div class="p-5 hover:bg-slate-50 transition-all border-b border-slate-50 last:border-0">
+                        <div class="flex justify-between items-center mb-3">
                             <div>
                                 <span class="font-bold text-slate-800 text-sm">${m.nama}</span> 
-                                <span class="text-[9px] text-slate-400 ml-1">${m.nim}</span>
+                                <span class="text-[9px] text-slate-400 ml-1 block mt-0.5">${m.nim} • Rata-rata Nilai: ${m.rataNilai || '-'}</span>
                             </div>
-                            <span class="text-xs font-bold ${m.nilai < 40 ? 'text-red-500' : 'text-emerald-600'}">${m.nilai}%</span>
+                            <span class="px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${m.ewBadge}">${m.ewLabel}</span>
                         </div>
                         <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                             <div class="h-full ${w} rounded-full transition-all duration-1000" style="width: ${m.nilai}%"></div>
                         </div>
-                        <div class="flex justify-between items-center mt-2">
-                            <p class="text-[9px] text-slate-400 font-bold">${s} <span class="font-normal text-slate-400">(${m.tugasSelesai}/${m.totalTugas} Tugas)</span></p>
-                            ${m.nilai < 50 && m.totalTugas > 0 ? `
+                        <div class="flex justify-between items-center mt-3">
+                            <p class="text-[9px] text-slate-400 font-bold">Progres: <span class="text-slate-600">${m.nilai}%</span> (${m.tugasSelesai}/${m.totalTugas} Tugas)</p>
+                            
+                            <div class="flex gap-2">
                                 <button onclick="window.bukaPesanModal('${m.nim}', '${m.nama}', '${kelasTerpilih}', null)" 
-                                    class="text-[9px] bg-amber-100 text-amber-700 px-3 py-1 rounded-lg hover:bg-amber-200 transition">
-                                    💬 Tanya Kendala
+                                    class="text-[9px] bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-lg hover:bg-indigo-100 transition font-bold">
+                                    💬 Chat
                                 </button>
-                            ` : ''}
+                                ${m.ewLabel !== 'Aman' ? `
+                                <button onclick="window.bedahAI('${m.nama}', ${m.nilai}, ${m.rataNilai}, ${m.tugasSelesai}, ${m.totalTugas}, '${m.ewLabel}')" 
+                                    class="text-[9px] bg-slate-900 text-white px-3 py-1.5 rounded-lg hover:bg-slate-800 transition font-bold shadow-md flex items-center gap-1">
+                                    🤖 Analisis AI
+                                </button>
+                                ` : ''}
+                            </div>
                         </div>
                     </div>
                 `;
@@ -680,6 +694,65 @@
         }
     }
 
+    // ==========================================
+    // FUNGSI BEDAH AI (EARLY WARNING DEEP DIVE)
+    // ==========================================
+    window.bedahAI = async function(nama, keaktifan, rataNilai, tugasSelesai, totalTugas, label) {
+        const modal = document.getElementById('ai-analisis-modal');
+        const content = document.getElementById('ai-modal-content');
+        
+        document.getElementById('ai-target-nama').innerText = nama;
+        document.getElementById('ai-loading-box').classList.remove('hidden');
+        document.getElementById('ai-result-box').classList.add('hidden');
+        document.getElementById('ai-text-result').innerHTML = "";
+        
+        modal.classList.remove('hidden');
+        setTimeout(() => {
+            modal.classList.remove('opacity-0');
+            content.classList.remove('scale-95');
+        }, 10);
+
+        // Prompt khusus buat Vercel Gemini lo
+        const promptAI = `Kamu adalah AI Analis Data Akademik. Analisis mahasiswa bernama ${nama}. Data saat ini:
+        - Label Early Warning: ${label}
+        - Keaktifan Mengerjakan Tugas: ${keaktifan}% (${tugasSelesai} dari ${totalTugas} tugas selesai)
+        - Nilai Rata-rata Tugas: ${rataNilai === 0 ? 'Belum ada nilai' : rataNilai}
+        
+        Berikan format balasan persis seperti ini (tanpa markdown markdown backticks):
+        <p><b>🔍 Diagnosa Masalah:</b> [Berikan 1-2 kalimat diagnosa kenapa mahasiswa ini berisiko gagal berdasarkan data di atas]</p>
+        <p class="mt-2"><b>💡 Rekomendasi Tindakan:</b> [Berikan 1 kalimat solusi praktis apa yang harus dilakukan dosen (misal: panggil untuk konseling, beri tugas remedial, dll)]</p>`;
+
+        try {
+            const backendURL = "https://edulink-proxy-api.vercel.app/api/chat";
+            const response = await fetch(backendURL, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pesan: promptAI })
+            });
+            const data = await response.json();
+            
+            document.getElementById('ai-loading-box').classList.add('hidden');
+            document.getElementById('ai-result-box').classList.remove('hidden');
+            
+            if (data.reply) {
+                // Tampilkan balasan AI langsung dalam HTML
+                document.getElementById('ai-text-result').innerHTML = data.reply;
+            }
+        } catch (error) {
+            document.getElementById('ai-loading-box').classList.add('hidden');
+            document.getElementById('ai-result-box').classList.remove('hidden');
+            document.getElementById('ai-text-result').innerHTML = `<span class="text-red-500 font-bold">Koneksi ke AI gagal. Coba lagi nanti.</span>`;
+        }
+    };
+
+    window.tutupAnalisisAI = function() {
+        const modal = document.getElementById('ai-analisis-modal');
+        const content = document.getElementById('ai-modal-content');
+        modal.classList.add('opacity-0');
+        content.classList.add('scale-95');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+    
     async function updateStatistik() {
         if (!kelasTerpilih) return;
         try {
@@ -763,5 +836,39 @@
     
     startApp();
 </script>
+<div id="ai-analisis-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-[40px] border border-slate-200 shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300" id="ai-modal-content">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-gradient-to-r from-indigo-50 to-purple-50 rounded-t-[40px]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-xl shadow-md">🤖</div>
+                <div>
+                    <h3 class="text-lg font-black text-indigo-900">Analisis Risiko AI</h3>
+                    <p class="text-[9px] font-bold text-indigo-500 uppercase tracking-widest">Early Warning System</p>
+                </div>
+            </div>
+            <button onclick="tutupAnalisisAI()" class="text-indigo-400 hover:text-red-500 transition bg-white rounded-full p-2">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div class="flex justify-between items-center border-b border-slate-100 pb-3">
+                <span class="text-xs font-bold text-slate-500">Target Mahasiswa:</span>
+                <span id="ai-target-nama" class="text-sm font-black text-slate-800">Memuat...</span>
+            </div>
+            
+            <div id="ai-loading-box" class="flex flex-col items-center justify-center py-8 space-y-3">
+                <div class="animate-spin inline-block w-10 h-10 border-4 border-indigo-600 border-t-transparent rounded-full"></div>
+                <p class="text-xs text-indigo-600 font-bold animate-pulse">AI sedang menganalisis pola belajar...</p>
+            </div>
+            
+            <div id="ai-result-box" class="hidden">
+                <div class="bg-slate-50 p-5 rounded-2xl text-xs text-slate-700 leading-relaxed border border-slate-200 shadow-inner" id="ai-text-result">
+                    </div>
+            </div>
+            
+            <button onclick="tutupAnalisisAI()" class="w-full mt-2 bg-slate-900 text-white py-3.5 rounded-2xl text-xs font-bold hover:bg-slate-800 transition shadow-lg">Selesai</button>
+        </div>
+    </div>
+</div>
 </body>
 </html>
