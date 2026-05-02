@@ -3,250 +3,295 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Dosen | EduLink</title>
+    <title>Dashboard Dosen | EduLink</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap');
-        body { font-family: 'Plus Jakarta Sans', sans-serif; }
-        #sidebar { transition: all 0.3s ease-in-out; min-width: 260px; }
-        .sidebar-closed { margin-left: -260px; opacity: 0; }
-        #main-area { transition: all 0.3s ease-in-out; }
-        .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(129, 140, 248, 0.2); border-radius: 10px; }
+        #sidebar {
+            transition: all 0.3s ease-in-out;
+            min-width: 280px;
+            max-width: 280px;
+        }
+        .sidebar-closed {
+            margin-left: -280px;
+            opacity: 0;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #1e293b;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 10px;
+        }
+        .tab-active {
+            background-color: #6366f1;
+            color: white;
+        }
+        .tab-inactive {
+            background-color: #f1f5f9;
+            color: #475569;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
     </style>
-    <script src="global.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-    <script type="importmap">
-  {
-    "imports": {
-      "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-      "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
-    }
-  }
-</script>
-
 </head>
 <body class="bg-slate-50 flex h-screen overflow-hidden">
 
-    <aside id="sidebar" class="bg-indigo-900 text-white flex flex-col h-full shadow-2xl z-50">
-        <div class="p-6">
-            <h1 class="text-2xl font-black text-indigo-300 tracking-tighter italic">DOSEN</h1>
-        </div>
-
-        <nav class="px-4 space-y-2">
-            <a href="dosen.html" class="flex items-center gap-3 p-3 bg-indigo-700 rounded-xl text-xs font-bold transition">
-                <span>📊</span> Dashboard
-            </a>
-            <a href="buat-kelas.html" class="flex items-center gap-3 p-3 text-indigo-300 hover:bg-indigo-800 rounded-xl text-xs font-bold transition">
+<aside id="sidebar" class="bg-slate-900 text-white flex flex-col h-full shadow-2xl z-50">
+    <div class="p-6">
+        <h1 class="text-2xl font-black text-blue-400 tracking-tighter italic">EduLink</h1>
+        <p class="text-[10px] text-slate-400 uppercase tracking-widest mt-1">Dosen Panel</p>
+    </div>
+    
+    <div class="px-4 mt-4">
+        <div class="bg-slate-800/50 rounded-2xl p-4 mb-4">
+            <p class="text-[9px] text-slate-400 uppercase tracking-wider">Kelas Saya</p>
+            <div id="daftar-kelas-sidebar-dosen" class="mt-2 space-y-1 max-h-64 overflow-y-auto custom-scrollbar">
+                <p class="text-[10px] text-slate-500 italic">Memuat kelas...</p>
+            </div>
+            <button onclick="bukaModalBuatKelas()" class="w-full mt-3 bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-xl text-[10px] font-bold transition flex items-center justify-center gap-2">
                 <span>➕</span> Buat Kelas Baru
-            </a>
-        </nav>
-
-        <div class="flex-grow px-4 mt-6 overflow-hidden flex flex-col">
-            <p class="px-3 text-[9px] font-black text-indigo-400 uppercase tracking-[0.2em] mb-3">Daftar Kelas</p>
-            <div id="daftar-kelas-sidebar" class="space-y-1 overflow-y-auto pr-2 custom-scrollbar max-h-72">
-                </div>
+            </button>
         </div>
+    </div>
 
-        <div class="mt-auto border-t border-indigo-800 bg-indigo-950/50">
-            <div id="dosen-profile-name" class="p-4 text-[10px] text-indigo-300 italic"></div>
-            <div class="p-4 pt-0">
-                <button onclick="logout()" class="w-full flex items-center justify-center gap-2 p-3 bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white rounded-xl text-xs font-bold transition">
-                    <span>🚪</span> Keluar
+    <nav class="px-4 space-y-1">
+        <a href="dosen.html" class="flex items-center gap-3 p-3 bg-blue-600 rounded-xl font-bold text-xs transition">
+            <span>📊</span> Dashboard
+        </a>
+        <a href="kelola-kelas.html" class="flex items-center gap-3 p-3 text-slate-400 hover:bg-slate-800 hover:text-white rounded-xl text-xs transition">
+            <span>📚</span> Kelola Kelas
+        </a>
+    </nav>
+
+    <div class="mt-auto border-t border-slate-800 bg-slate-950/30">
+        <div id="sidebar-user-info" class="p-4 flex flex-col"></div>
+        <div class="p-4 pt-0">
+            <button onclick="logout()" class="w-full flex items-center justify-center gap-3 p-3 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-xl text-xs font-bold transition">
+                <span>🚪</span> Keluar
+            </button>
+        </div>
+    </div>
+</aside>
+
+<script>
+    function logout() {
+        if(confirm("Yakin ingin keluar?")) {
+            localStorage.removeItem('user_role');
+            localStorage.removeItem('user_id');
+            localStorage.removeItem('user_nama');
+            window.location.href = "index.html";
+        }
+    }
+</script>
+
+<div id="main-area" class="flex-grow flex flex-col min-w-0 overflow-hidden">
+    <nav class="bg-white border-b p-4 px-8 flex justify-between items-center sticky top-0 z-40">
+        <div class="flex items-center gap-4">
+            <button onclick="toggleSidebar()" class="p-2 hover:bg-slate-100 rounded-lg transition text-slate-600">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <h2 class="font-bold text-slate-700">Dashboard Dosen</h2>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="relative">
+                <button onclick="bukaKesulitanModal()" class="bg-amber-100 text-amber-700 px-3 py-2 rounded-xl text-[10px] font-bold hover:bg-amber-200 transition flex items-center gap-2">
+                    <span>⚠️</span> Kesulitan Mahasiswa
+                    <span id="kesulitan-badge" class="bg-red-500 text-white rounded-full w-4 h-4 text-[8px] flex items-center justify-center hidden">0</span>
+                </button>
+            </div>
+            <img id="avatar-img" src="https://ui-avatars.com/api/?name=Dosen&background=6366f1&color=fff" class="w-8 h-8 rounded-full">
+        </div>
+    </nav>
+
+    <main class="flex-1 overflow-y-auto p-8">
+        <!-- Informasi Kelas Aktif -->
+        <div id="info-kelas-aktif" class="mb-6 p-4 bg-gradient-to-r from-indigo-50 to-purple-50 rounded-2xl border border-indigo-100 hidden">
+            <div class="flex justify-between items-center">
+                <div>
+                    <p class="text-[9px] text-indigo-500 font-black uppercase tracking-wider">Kelas Aktif</p>
+                    <h3 id="judul-kelas-aktif" class="text-xl font-black text-indigo-800">-</h3>
+                    <p id="kode-kelas-aktif" class="text-[10px] text-slate-500 mt-1">Kode: -</p>
+                </div>
+                <button onclick="hapusKelasYangAktif()" class="bg-red-100 text-red-600 px-4 py-2 rounded-xl text-[10px] font-bold hover:bg-red-200 transition flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    Hapus Kelas
                 </button>
             </div>
         </div>
-    </aside>
 
-    <div id="main-area" class="flex-grow flex flex-col min-w-0">
-        <nav class="bg-white border-b p-4 px-8 flex justify-between items-center sticky top-0 z-40">
-            <button onclick="toggleSidebar()" class="p-2 hover:bg-slate-100 rounded-lg transition text-slate-600">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
-            </button>
-            <div class="flex items-center gap-3">
-                <span class="text-xs font-bold text-slate-400 italic">Status: Online</span>
-                <div class="w-8 h-8 bg-indigo-600 rounded-full"></div>
-            </div>
-        </nav>
-
-        <main class="p-8 overflow-y-auto">
-    <div class="flex justify-between items-end mb-10">
-        <div>
-            <h2 id="judul-kelas-aktif" class="text-3xl font-bold text-slate-800">Pilih Kelas</h2>
-            <p class="text-slate-500 mt-1">Kelola tugas dan absensi kelas ini.</p>
-        </div>
-        <div class="bg-white px-4 py-2 rounded-xl border border-dashed border-indigo-400">
-            <p class="text-[10px] text-indigo-500 font-bold uppercase">Kode MK</p>
-            <h4 id="kode-mk-aktif" class="text-xl font-black text-indigo-700 tracking-widest">---</h4>
-        </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        
-        <div class="space-y-6">
-            <div class="grid grid-cols-3 gap-4">
-                <div class="bg-green-50 p-6 rounded-3xl border border-green-100">
-                    <p class="text-[10px] font-black text-green-600 uppercase">Hadir</p>
-                    <h3 id="stat-hadir" class="text-3xl font-black text-green-700">0</h3>
-                </div>
-                <div class="bg-orange-50 p-6 rounded-3xl border border-orange-100">
-                    <p class="text-[10px] font-black text-orange-600 uppercase">Izin</p>
-                    <h3 id="stat-izin" class="text-3xl font-black text-orange-700">0</h3>
-                </div>
-                <div class="bg-red-50 p-6 rounded-3xl border border-red-100">
-                    <p class="text-[10px] font-black text-red-600 uppercase">Sakit</p>
-                    <h3 id="stat-sakit" class="text-3xl font-black text-red-700">0</h3>
-                </div>
-            </div>
-
-            <div class="bg-white p-8 rounded-[40px] border border-slate-200 shadow-sm flex flex-col items-center">
-                <h3 class="text-sm font-bold text-slate-700 mb-6">Persentase Kehadiran Sesi Ini</h3>
-                <div class="w-full max-w-[280px] h-[280px]">
-                    <canvas id="absensiChart"></canvas>
-                </div>
-            </div>
-
-            <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center">
-                    <h3 class="font-bold text-slate-800 text-sm">Daftar Kehadiran Real-time</h3>
-                    <button onclick="refreshAbsen()" class="text-[10px] font-bold text-blue-600 hover:underline uppercase tracking-wider">Refresh Data 🔄</button>
-                </div>
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead class="bg-slate-50">
-                            <tr>
-                                <th class="p-4 text-[10px] font-black text-slate-400 uppercase">Mahasiswa</th>
-                                <th class="p-4 text-[10px] font-black text-slate-400 uppercase">Waktu</th>
-                                <th class="p-4 text-[10px] font-black text-slate-400 uppercase text-right">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody id="tabel-absen-body">
-                            <tr><td colspan="3" class="p-8 text-center text-slate-400 text-xs italic">Belum ada mahasiswa yang absen.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-
-        <div class="space-y-6">
-            <section class="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
-    <h3 class="text-lg font-bold mb-6 flex items-center gap-2"><span>📤</span> Publikasikan Tugas</h3>
-    <div class="space-y-4">
-        <div>
-        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Judul Tugas</label>
-        <input type="text" id="input-judul-tugas" placeholder="Contoh: Laporan Pertemuan 8" class="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl text-xs focus:outline-none focus:border-indigo-500">
-    </div>
-
-        <div class="space-y-3">
-            <p class="text-[10px] font-black text-slate-400 uppercase ml-1">Lampiran Modul (PDF/ZIP)</p>
-            
-            <div onclick="document.getElementById('input-file-tugas').click()" class="border-2 border-dashed border-slate-200 p-8 rounded-2xl text-center hover:bg-slate-50 cursor-pointer transition group relative overflow-hidden">
-                <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">📂</div>
-                <p id="nama-file-terpilih" class="text-xs text-slate-400">Klik untuk pilih file dari komputer</p>
-                <input type="file" id="input-file-tugas" class="hidden" onchange="window.tampilkanNamaFile(this)">
-            </div>
-
-            <div id="container-progress" class="hidden w-full bg-slate-100 h-4 rounded-full overflow-hidden mb-4">
-    <div id="progress-bar" class="bg-indigo-600 h-full transition-all duration-300" style="width: 0%"></div>
-    <p id="progress-text" class="text-[9px] text-slate-500 mt-1 italic text-center">Mengirim: 0%</p>
-</div>
-
-<div class="space-y-4">
-
-                <div class="w-full bg-slate-200 rounded-full h-2.5 relative overflow-hidden">
-                    <div id="bar-progres" class="bg-blue-600 h-full rounded-full transition-all duration-300 ease-out" style="width: 0%"></div>
-                    <div class="absolute inset-0 bg-gradient-to-r from-white/0 via-white/30 to-white/0 animate-shimmer"></div>
-                </div>
-            </div>
-            </div>
-        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Tanggal dikirim</label>
-        <input type="datetime-local" id="input-deadline-tugas" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none text-sm">
-        <div>
-        <label class="text-[10px] font-black text-slate-400 uppercase ml-2">Tenggat Waktu (Deadline)</label>
-        <input type="datetime-local" id="input-deadline-tugas" class="w-full bg-slate-50 border border-slate-100 p-4 rounded-2xl text-xs focus:outline-none focus:border-indigo-500">
-    </div>
-        <textarea id="input-deskripsi-tugas" rows="4" placeholder="Instruksi deskripsi..." class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none text-sm"></textarea>
-        
-        
-        <button id="btn-publikasikan" onclick="window.publikasikanTugas()" class="w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 uppercase text-xs tracking-widest">Kirim ke Mahasiswa</button>
-    </div>
-</section>
-
-<style>
-    @keyframes shimmer {
-        0% { transform: translateX(-100%); }
-        100% { transform: translateX(100%); }
-    }
-    .animate-shimmer {
-        animation: shimmer 1.5s infinite;
-    }
-</style>
-
-            <section class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm border-l-8 border-l-green-500">
-                <h3 class="font-bold mb-2 text-sm">Kontrol Akses Presensi</h3>
-                <p class="text-[10px] text-slate-500 mb-4 font-medium">Aktifkan tombol ini agar mahasiswa bisa melakukan absen melalui dashboard mereka.</p>
-                <button id="toggle-absen" onclick="statusAbsen()" class="w-full bg-green-500 text-white py-3 rounded-xl font-bold hover:bg-green-600 transition shadow-md shadow-green-100">Buka Absensi Sekarang</button>
-            </section>
-
-            <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-indigo-50/30">
-                    <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><span>📝</span> Tugas Masuk</h3>
-                    <span id="jumlah-tugas-masuk" class="bg-indigo-600 text-white text-[9px] px-2 py-1 rounded-full font-black">0 Baru</span>
-                </div>
-                <div class="p-4">
-                    <table class="w-full text-left">
-                        <tbody id="tabel-koreksi-body">
-                            <tr><td class="text-[10px] text-slate-400 italic p-4 text-center">Klik tugas di riwayat untuk koreksi.</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-
-            <section class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden mt-6">
-    <div class="p-6 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-        <h3 class="font-bold text-slate-800 text-sm flex items-center gap-2"><span>📂</span> Riwayat Tugas Terbit</h3>
-    </div>
-    <div class="p-4 max-h-[400px] overflow-y-auto" id="daftar-tugas-terkirim">
-        <p class="text-[10px] text-slate-400 italic text-center p-8">Memuat riwayat...</p>
-    </div>
-</section>
-
-        </div>
-    </div>
-</main>
-
-<div id="modal-cek-tugas" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
-    <div class="bg-white w-full max-w-2xl rounded-[32px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-        <div class="p-8 border-b border-slate-100 flex justify-between items-center">
-            <div>
-                <h3 id="modal-judul-tugas" class="text-xl font-black text-slate-800">Detail Tugas</h3>
-                <p id="modal-deadline-tugas" class="text-[10px] text-red-500 font-bold mt-1 uppercase tracking-widest"></p>
-            </div>
-            <button onclick="tutupModalTugas()" class="text-slate-400 hover:text-slate-600 text-3xl">&times;</button>
-        </div>
-        <div class="p-8 max-h-[70vh] overflow-y-auto">
-            <div class="mb-8">
-                <h4 class="text-[10px] font-black text-slate-400 uppercase mb-3 tracking-widest">Instruksi</h4>
-                <p id="modal-deskripsi-tugas" class="text-xs text-slate-600 leading-relaxed bg-slate-50 p-5 rounded-2xl border border-slate-100 italic"></p>
-            </div>
-            <div>
-                <h4 class="text-[10px] font-black text-indigo-500 uppercase mb-4 tracking-widest">Pengumpulan Mahasiswa</h4>
-                <div id="list-pengumpulan" class="space-y-3">
+        <!-- Statistik -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-lg">👨‍🎓</div>
+                    <div>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Total Mahasiswa</p>
+                        <h4 id="total-mahasiswa" class="text-xl font-black text-slate-800">0</h4>
                     </div>
+                </div>
             </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-emerald-50 rounded-xl flex items-center justify-center text-lg">📋</div>
+                    <div>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Total Tugas</p>
+                        <h4 id="total-tugas" class="text-xl font-black text-slate-800">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center text-lg">⚠️</div>
+                    <div>
+                        <p class="text-[9px] text-slate-400 font-bold uppercase">Laporan Kesulitan</p>
+                        <h4 id="total-laporan" class="text-xl font-black text-slate-800">0</h4>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-indigo-600 p-5 rounded-2xl shadow-lg text-white">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center text-lg">📊</div>
+                    <div>
+                        <p class="text-[9px] text-indigo-100 font-bold uppercase">Rata-rata Keaktifan</p>
+                        <h4 id="rata-keaktifan-kelas" class="text-xl font-black">0%</h4>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="flex gap-2 mb-6">
+            <button onclick="setTab('laporan')" id="tab-laporan-btn" class="tab-active px-5 py-2 rounded-xl text-xs font-bold transition">📋 Laporan Kesulitan</button>
+            <button onclick="setTab('keaktifan')" id="tab-keaktifan-btn" class="tab-inactive px-5 py-2 rounded-xl text-xs font-bold transition">📊 Monitoring Keaktifan</button>
+        </div>
+
+        <!-- Tab Laporan Kesulitan -->
+        <div id="tab-laporan" class="fade-in">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800">📋 Daftar Mahasiswa yang Melaporkan Kesulitan Belajar</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Klik "Respon" untuk mengirim pesan bantuan ke mahasiswa</p>
+                </div>
+                <div id="daftar-laporan" class="divide-y divide-slate-100">
+                    <div class="p-8 text-center text-slate-400 text-sm">Pilih kelas terlebih dahulu</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab Monitoring Keaktifan -->
+        <div id="tab-keaktifan" class="hidden fade-in">
+            <div class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100">
+                    <h3 class="font-bold text-slate-800">📊 Keaktifan Mahasiswa per Kelas</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Persentase keaktifan berdasarkan tugas, absen, dan partisipasi</p>
+                </div>
+                <div id="daftar-keaktifan" class="divide-y divide-slate-100">
+                    <div class="p-8 text-center text-slate-400 text-sm">Pilih kelas terlebih dahulu</div>
+                </div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Modal Buat Kelas -->
+<div id="buat-kelas-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-lg">📚</div>
+                <h3 class="text-lg font-bold text-slate-800">Buat Kelas Baru</h3>
+            </div>
+            <button onclick="tutupModalBuatKelas()" class="text-slate-400 hover:text-red-500 transition">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <div>
+    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Nama Kelas</label>
+    <input type="text" id="nama-kelas-baru" placeholder="Contoh: Pemrograman Web" class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+</div>
+<div>
+    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Kode Join Kelas (Manual)</label>
+    <input type="text" id="kode-join-kelas" placeholder="Contoh: WEB123 atau biarkan kosong untuk auto-generate" class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+    <p class="text-[8px] text-slate-400 mt-1">⚠️ Kosongkan untuk generate otomatis, atau isi sendiri (minimal 4 karakter)</p>
+</div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Hari</label>
+                <select id="hari-kelas-baru" class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <option value="Senin">Senin</option>
+                    <option value="Selasa">Selasa</option>
+                    <option value="Rabu">Rabu</option>
+                    <option value="Kamis">Kamis</option>
+                    <option value="Jumat">Jumat</option>
+                    <option value="Sabtu">Sabtu</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Jam Mulai</label>
+                <input type="time" id="jam-kelas-baru" value="08:00" class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Warna Tema</label>
+                <select id="tema-kelas-baru" class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+                    <option value="bg-blue-600">Biru</option>
+                    <option value="bg-purple-600">Ungu</option>
+                    <option value="bg-emerald-600">Hijau</option>
+                    <option value="bg-amber-600">Oranye</option>
+                    <option value="bg-rose-600">Merah Muda</option>
+                </select>
+            </div>
+            <button onclick="buatKelasBaru()" class="w-full bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">✨ Buat Kelas</button>
         </div>
     </div>
 </div>
 
-        
-   <script type="module">
-    // 1. IMPORT FIREBASE
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getDatabase, ref, set, push, onValue, remove, get } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+<!-- Modal Kirim Pesan ke Mahasiswa -->
+<div id="pesan-modal" class="fixed inset-0 z-[100] bg-slate-900/60 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md transform scale-95 transition-transform duration-300">
+        <div class="p-6 border-b border-slate-100 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-lg">💬</div>
+                <div>
+                    <h3 class="text-lg font-bold text-slate-800">Balas Mahasiswa</h3>
+                    <p id="target-mahasiswa" class="text-[10px] text-slate-500">Mahasiswa</p>
+                </div>
+            </div>
+            <button onclick="tutupPesanModal()" class="text-slate-400 hover:text-red-500 transition">
+                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            </button>
+        </div>
+        <div class="p-6 space-y-4">
+            <input type="hidden" id="pesan-nim" value="">
+            <input type="hidden" id="pesan-kelas-kode" value="">
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Judul Pesan</label>
+                <input type="text" id="pesan-judul" placeholder="Contoh: Bantuan untuk Materi Database" class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500">
+            </div>
+            <div>
+                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Isi Pesan</label>
+                <textarea id="pesan-isi" rows="4" placeholder="Tulis pesan bantuan untuk mahasiswa..." class="w-full mt-2 p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:border-indigo-500"></textarea>
+            </div>
+            <button onclick="kirimPesan()" class="w-full bg-indigo-600 text-white py-3 rounded-xl text-xs font-bold hover:bg-indigo-700 transition">📨 Kirim Pesan Bantuan</button>
+        </div>
+    </div>
+</div>
 
-    // 2. CONFIG EDULINK
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getDatabase, ref, set, push, onValue, get, update, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
     const firebaseConfig = {
         apiKey: "AIzaSyCbPRP947C2OwPMaLSqWfbFCOLEkBBrx8c",
         authDomain: "edulink-v2.firebaseapp.com",
@@ -257,426 +302,466 @@
         appId: "1:450247433954:web:c3875535c4d1edc9a388bb"
     };
 
-    // 3. INISIALISASI
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    let myChart = null; 
 
-    // --- FUNGSI UPDATE CHART & ANGKA ---
-    window.updateChart = function(h, i, s) {
-        // 1. Update Angka Statistik
-        const elementHadir = document.getElementById('stat-hadir');
-        const elementIzin = document.getElementById('stat-izin');
-        const elementSakit = document.getElementById('stat-sakit');
+    let kelasTerpilih = null;
+    let currentTab = 'laporan';
+    let daftarKelasDosen = [];
 
-        if (elementHadir) elementHadir.innerText = h;
-        if (elementIzin) elementIzin.innerText = i;
-        if (elementSakit) elementSakit.innerText = s;
-
-        // 2. Gambar Donat
-        const canvas = document.getElementById('absensiChart');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-
-        if (myChart) { myChart.destroy(); }
-
-        myChart = new Chart(ctx, {
-            type: 'doughnut',
-            data: { 
-                labels: ['Hadir', 'Izin', 'Sakit'], 
-                datasets: [{ 
-                    data: [h, i, s], 
-                    backgroundColor: ['#22c55e', '#f97316', '#ef4444'], 
-                    borderWidth: 0 
-                }] 
-            },
-            options: { 
-                plugins: { legend: { display: false } }, 
-                cutout: '70%', 
-                responsive: true, 
-                maintainAspectRatio: false 
-            }
-        });
-    };
-
-    
-
-    // --- FITUR: ABSENSI REALTIME ---
-    window.refreshAbsen = function() {
-        const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-        if (!kelasAktif) return;
-        const kode = kelasAktif.kode || kelasAktif.joinCode;
-
-        onValue(ref(db, 'absensi/' + kode), (snapshot) => {
-            let h = 0, i = 0, s = 0;
-            let tableHTML = ""; 
-            const containerTabel = document.getElementById('tabel-absen-body');
-
-            if (snapshot.exists()) {
-                snapshot.forEach((child) => {
-                    const data = child.val();
-                    if (data.status === "Hadir") h++;
-                    else if (data.status === "Izin") i++;
-                    else if (data.status === "Sakit") s++;
-
-                    tableHTML += `
-                        <tr class="border-b border-slate-50">
-                            <td class="p-4 text-[10px] font-bold text-slate-700">${data.nama}</td>
-                            <td class="p-4 text-[9px] text-slate-400">${data.waktu}</td>
-                            <td class="p-4 text-right">
-                                <span class="px-2 py-1 rounded-lg text-[8px] font-black uppercase ${data.status === 'Hadir' ? 'bg-green-100 text-green-600' : 'bg-orange-100 text-orange-600'}">${data.status}</span>
-                            </td>
-                        </tr>`;
-                });
-                if(containerTabel) containerTabel.innerHTML = tableHTML;
-                window.updateChart(h, i, s);
-            } else {
-                if(containerTabel) containerTabel.innerHTML = `<tr><td colspan="3" class="p-8 text-center text-slate-400 text-xs italic">Belum ada mahasiswa yang absen.</td></tr>`;
-                window.updateChart(0, 0, 0);
-            }
-        });
-    };
-
-    // --- FITUR: PUBLIKASIKAN TUGAS ---
-    window.publikasikanTugas = async function() {
-    // 1. Ambil input dari HTML
-    const judul = document.getElementById('input-judul-tugas').value;
-    const deskripsi = document.getElementById('input-deskripsi-tugas').value;
-    const deadline = document.getElementById('input-deadline-tugas').value;
-    const fileInput = document.getElementById('input-file-tugas');
-    const file = fileInput.files[0];
-
-    // --- PERBAIKAN DI SINI: Ambil data kelasAktif dulu dari localStorage ---
-    const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-
-    // 2. Validasi
-    if (!kelasAktif) return alert("Pilih kelas di sidebar dulu, !");
-    if (!judul) return alert("Judul tugas jangan dikosongin ya!");
-
-    const kode = kelasAktif.kode || kelasAktif.joinCode;
-    const progressContainer = document.getElementById('container-progress');
-
-    // 3. Fungsi Simpan (Firebase)
-    const kirimDataKeFirebase = (urlHasilUpload = null) => {
-        const tugasBaruRef = push(ref(db, 'tugas/' + kode));
-        set(tugasBaruRef, {
-            judul: judul,
-            deskripsi: deskripsi || "",
-            deadline: deadline || "-", 
-            fileURL: urlHasilUpload,
-            waktu: new Date().toLocaleString('id-ID')
-        }).then(() => {
-            alert("Tugas sudah terbit! 🚀");
-            location.reload();
-        }).catch((err) => {
-            alert("Gagal simpan ke Firebase: " + err.message);
-        });
-    };
-
-    // 4. Logika Upload
-    if (file) {
-        // Jika ada file, upload ke Cloudinary dulu
-        if (progressContainer) progressContainer.classList.remove('hidden');
+    // ========== AMBIL DAFTAR KELAS DOSEN ==========
+    async function loadDosenKelas() {
+        const nidn = localStorage.getItem('user_id');
+        const sidebarContainer = document.getElementById('daftar-kelas-sidebar-dosen');
         
-        const formData = new FormData();
-        formData.append("file", file);
-        formData.append("upload_preset", "Edulink_upload");
-
         try {
-            const res = await fetch(`https://api.cloudinary.com/v1_1/dlsejywwa/upload`, {
-                method: "POST",
-                body: formData
-            });
-            const data = await res.json();
+            const snapshot = await get(ref(db, `dosen/${nidn}/kelas`));
             
-            if (data.secure_url) {
-                kirimDataKeFirebase(data.secure_url);
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+                daftarKelasDosen = Array.isArray(data) ? data : Object.values(data);
             } else {
-                alert("Gagal upload file ke Cloudinary!");
-                if (progressContainer) progressContainer.classList.add('hidden');
+                daftarKelasDosen = [];
+            }
+            
+            if (daftarKelasDosen.length === 0) {
+                sidebarContainer.innerHTML = '<p class="text-[10px] text-slate-500 italic">Belum ada kelas. Buat kelas baru!</p>';
+                document.getElementById('info-kelas-aktif').classList.add('hidden');
+                kelasTerpilih = null;
+            } else {
+                sidebarContainer.innerHTML = daftarKelasDosen.map(kelas => `
+                    <div onclick="pilihKelas('${kelas.kodeUnik}')" 
+                        class="group flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer transition-all ${kelasTerpilih === kelas.kodeUnik ? 'bg-white/20 border border-slate-600' : 'border border-transparent'}">
+                        <div class="flex items-center gap-2 flex-grow overflow-hidden">
+                            <div class="w-2 h-2 rounded-full ${kelas.tema || 'bg-blue-500'} shadow-[0_0_8px_rgba(255,255,255,0.5)]"></div>
+                            <div class="overflow-hidden">
+                                <p class="text-[10px] font-bold text-slate-200 truncate group-hover:text-white">${kelas.nama}</p>
+                                <p class="text-[8px] text-slate-500 tracking-wider">${kelas.kodeUnik}</p>
+                            </div>
+                        </div>
+                        <button onclick="event.stopPropagation(); hapusKelas('${kelas.kodeUnik}')" 
+                            class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded-lg transition">
+                            <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                        </button>
+                    </div>
+                `).join('');
+                
+                // Pilih kelas pertama otomatis jika belum ada yang terpilih
+                if (!kelasTerpilih && daftarKelasDosen.length > 0) {
+                    await window.pilihKelas(daftarKelasDosen[0].kodeUnik);
+                }
             }
         } catch (error) {
-            alert("Koneksi bermasalah pas upload file!");
-            if (progressContainer) progressContainer.classList.add('hidden');
+            console.error("Gagal memuat sidebar kelas:", error);
+            sidebarContainer.innerHTML = '<p class="text-[10px] text-red-500 italic">Gagal memuat data.</p>';
         }
-    } else {
-        // Jika cuma teks, langsung hajar ke Firebase
-        kirimDataKeFirebase();
     }
-};
 
-    // --- FITUR: RIWAYAT TUGAS ---
-    window.muatRiwayatTugas = function() {
-        const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-        if (!kelasAktif) return;
-        const kode = kelasAktif.kode || kelasAktif.joinCode;
-
-        onValue(ref(db, 'tugas/' + kode), (snapshot) => {
-            const container = document.getElementById('daftar-tugas-terkirim');
-            if (!container) return;
-            let html = "";
-            if (snapshot.exists()) {
-                let dataArray = [];
-                snapshot.forEach(child => { dataArray.push({key: child.key, val: child.val()}) });
-                dataArray.reverse().forEach(item => {
-                    const t = item.val;
-                    html += `
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 group hover:bg-white hover:shadow-md cursor-pointer mb-3" 
-                             onclick="window.cekDetailTugas('${item.key}', '${t.judul.replace(/'/g, "&apos;")}', '${t.deskripsi.replace(/'/g, "&apos;")}', '${t.deadline || '-'}')">
-                            <div class="flex justify-between items-start mb-2">
-                                <div>
-                                    <p class="text-[11px] font-extrabold text-slate-800">${t.judul}</p>
-                                    <p class="text-[8px] text-indigo-500 font-bold uppercase tracking-tighter">📅 ${t.waktu}</p>
-                                </div>
-                                <button onclick="event.stopPropagation(); window.hapusTugasCloud('${item.key}')" class="p-2 bg-red-50 text-red-500 rounded-lg text-[10px]">🗑️</button>
-                            </div>
-                            <p class="text-[10px] text-slate-500 line-clamp-1 italic">${t.fileURL ? '🔗 Ada Lampiran File' : '📝 Hanya Instruksi'}</p>
-                        </div>`;
-                });
-                container.innerHTML = html;
-            } else {
-                container.innerHTML = `<p class="text-[10px] text-slate-400 italic text-center">Belum ada riwayat.</p>`;
-            }
-        });
-    };
-
-    window.hapusTugasCloud = function(key) {
-        const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-        if (kelasAktif && confirm("Yakin mau hapus tugas ini?")) {
-            remove(ref(db, `tugas/${kelasAktif.kode || kelasAktif.joinCode}/${key}`)).then(() => alert("Terhapus!"));
-        }
-    };
-
-    // --- FITUR: CEK TUGAS MASUK ---
-    window.cekDetailTugas = function(idTugas, judul, deskripsi, deadline) {
-        document.getElementById('modal-judul-tugas').innerText = judul;
-        document.getElementById('modal-deskripsi-tugas').innerText = deskripsi;
-        document.getElementById('modal-deadline-tugas').innerText = "Deadline: " + deadline;
+    // ========== PILIH KELAS ==========
+    window.pilihKelas = async function(kodeUnik) {
+        kelasTerpilih = kodeUnik;
+        const kelas = daftarKelasDosen.find(k => k.kodeUnik === kodeUnik);
         
-        const container = document.getElementById('list-pengumpulan');
-        container.innerHTML = `<p class="text-[10px] text-slate-400 italic text-center p-4">Mencari jawaban mahasiswa...</p>`;
-        document.getElementById('modal-cek-tugas').classList.remove('hidden');
-
-        const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-        const kode = kelasAktif.kode || kelasAktif.joinCode;
-
-        onValue(ref(db, `jawaban_tugas/${kode}/${idTugas}`), (snapshot) => {
-            if (snapshot.exists()) {
-                let html = "";
-                snapshot.forEach((child) => {
-                    const mhs = child.val();
-                    html += `
-                        <div class="flex justify-between items-center p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                            <div>
-                                <p class="text-xs font-bold text-slate-800">${mhs.nama}</p>
-                                <p class="text-[9px] text-slate-400">${mhs.waktu}</p>
-                            </div>
-                            <a href="${mhs.fileURL}" target="_blank" class="bg-white text-indigo-600 border border-indigo-100 px-4 py-2 rounded-xl text-[10px] font-black shadow-sm hover:bg-indigo-50 transition">Lihat Tugas 📂</a>
-                        </div>`;
-                });
-                container.innerHTML = html;
-                document.getElementById('jumlah-tugas-masuk').innerText = snapshot.size + " Terkumpul";
-            } else {
-                container.innerHTML = `<div class="text-center p-8"><p class="text-[10px] text-slate-400 italic">Belum ada pengumpulan.</p></div>`;
-            }
-        });
-    };
-
-    window.tutupModalTugas = () => document.getElementById('modal-cek-tugas').classList.add('hidden');
-
-    // --- FITUR: KONTROL ABSEN ---
-    window.statusAbsen = function() {
-    const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-    if (!kelasAktif) return alert("Pilih kelas dulu!");
-
-    const kode = kelasAktif.kode || kelasAktif.joinCode;
-    const btn = document.getElementById('toggle-absen');
-    if (!btn) return;
-
-    const akanMembuka = btn.innerText.includes("Buka");
-
-    // 1. Update status buka/tutup di Firebase
-    set(ref(db, 'status_absen/' + kode), {
-        isOpen: akanMembuka,
-        waktuUpdate: new Date().getTime() // Pakai angka milidetik biar sinkron sama mhs
-    }).then(() => {
-        
-        // 2. Logika jika DOSEN MEMBUKA (Reset Data)
-        if (akanMembuka) {
-    const kode = kelasAktif.kode || kelasAktif.joinCode;
-    const pathYangDihapus = 'absensi/' + kode;
-    
-    console.log("Sssst! lagi nyoba hapus alamat ini:", pathYangDihapus);
-
-    const dataAbsenRef = ref(db, pathYangDihapus);
-    remove(dataAbsenRef)
-        .then(() => {
-            console.log("✅ KONFIRMASI: Firebase bilang udah kehapus!");
-            window.updateChart(0, 0, 0);
-        })
-        .catch((err) => {
-            console.error("❌ WADUH: Firebase nolak karena:", err.message);
-        });
-}
-
-        // 3. Update Tampilan Tombol & Notifikasi
-        alert(akanMembuka ? "Sesi Baru Dimulai! Data lama dibersihkan. 🔓" : "Sesi Absen Ditutup! 🔒");
-        
-        btn.innerText = akanMembuka ? "Tutup Absensi Sekarang" : "Buka Absensi Sekarang";
-        btn.className = akanMembuka ? 
-            "w-full bg-red-500 text-white py-4 rounded-2xl font-bold shadow-lg" : 
-            "w-full bg-green-500 text-white py-4 rounded-2xl font-bold shadow-lg";
-
-    }).catch((err) => {
-        alert("Gagal update: " + err.message);
-    });
-};
-
-    // --- INISIALISASI ---
-    window.pilihKelas = (kode) => {
-        const dbKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
-        const kelas = dbKelas.find(k => (k.kode || k.joinCode) === kode);
         if (kelas) {
-            localStorage.setItem('kelas_dosen_aktif', JSON.stringify(kelas));
-            window.updateUIManajemen(kelas);
+            document.getElementById('info-kelas-aktif').classList.remove('hidden');
+            document.getElementById('info-kelas-aktif').classList.add('fade-in');
+            document.getElementById('judul-kelas-aktif').innerText = kelas.nama;
+            document.getElementById('kode-kelas-aktif').innerHTML = `Kode: <span class="font-mono font-bold bg-indigo-100 px-2 py-0.5 rounded text-indigo-700">${kodeUnik}</span>`;
         }
-    };
-
-    window.updateUIManajemen = function(kelas) {
-        const elJudul = document.getElementById('judul-kelas-aktif');
-        const elKode = document.getElementById('kode-mk-aktif');
         
-        if(elJudul) elJudul.innerText = kelas.nama;
-        if(elKode) elKode.innerText = kelas.kode || kelas.joinCode;
-
-        if (typeof window.refreshAbsen === "function") window.refreshAbsen();
-        if (typeof window.muatRiwayatTugas === "function") window.muatRiwayatTugas();
-    };
-
-    window.tampilkanKelasSidebar = function() {
-        const area = document.getElementById('daftar-kelas-sidebar');
-        const dbKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
-        
-        if (!area) return;
-        area.innerHTML = ""; 
-
-        if (dbKelas.length === 0) {
-            area.innerHTML = `<p class="px-3 text-[10px] text-slate-500 italic">Belum ada kelas.</p>`;
-            return;
-        }
-
-        dbKelas.forEach(k => {
-            const kode = k.kode || k.joinCode;
-            area.innerHTML += `
-                <div class="group flex items-center justify-between gap-3 px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer transition-all border border-transparent hover:border-white/10 mb-1">
-                    <div onclick="pilihKelas('${kode}')" class="flex items-center gap-3 flex-grow overflow-hidden">
-                        <div class="w-2 h-2 rounded-full ${k.tema || 'bg-blue-500'}"></div>
+        // Render ulang sidebar untuk update warna highlight (kelas yang dipilih)
+        const htmlSidebar = daftarKelasDosen.map(k => {
+            const isAktif = k.kodeUnik === kodeUnik;
+            return `
+                <div onclick="pilihKelas('${k.kodeUnik}')" 
+                    class="group flex items-center justify-between gap-2 px-3 py-2 rounded-xl hover:bg-white/10 cursor-pointer transition-all ${isAktif ? 'bg-white/20 border border-slate-600' : 'border border-transparent'}">
+                    <div class="flex items-center gap-2 flex-grow overflow-hidden">
+                        <div class="w-2 h-2 rounded-full ${k.tema || 'bg-blue-500'} ${isAktif ? 'shadow-[0_0_8px_rgba(255,255,255,0.5)]' : ''}"></div>
                         <div class="overflow-hidden">
-                            <p class="text-[10px] font-bold text-slate-200 truncate group-hover:text-white">${k.nama}</p>
-                            <p class="text-[8px] text-slate-500 font-bold uppercase">${kode}</p>
+                            <p class="text-[10px] font-bold ${isAktif ? 'text-white' : 'text-slate-200'} truncate">${k.nama}</p>
+                            <p class="text-[8px] ${isAktif ? 'text-indigo-300' : 'text-slate-500'} tracking-wider">${k.kodeUnik}</p>
                         </div>
                     </div>
-                    
-                    <button onclick="hapusKelas('${kode}')" class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded-lg transition-all">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                        </svg>
+                    <button onclick="event.stopPropagation(); hapusKelas('${k.kodeUnik}')" 
+                        class="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-red-500/20 text-slate-500 hover:text-red-400 rounded-lg transition">
+                        <svg class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                     </button>
                 </div>
             `;
-        });
+        }).join('');
+        document.getElementById('daftar-kelas-sidebar-dosen').innerHTML = htmlSidebar;
+        
+        // Muat semua statistik
+        await Promise.all([
+            loadLaporanKesulitan(),
+            loadKeaktifanMahasiswa(),
+            updateStatistik()
+        ]);
     };
 
-    // 🚨 PERBAIKAN: HAPUS KELAS LANGSUNG DARI FIREBASE (AWAN) 🚨
-    window.hapusKelas = async function(kode) {
-        let databaseKelas = JSON.parse(localStorage.getItem('database_kelas')) || [];
-        const infoKelas = databaseKelas.find(k => (k.kode || k.joinCode) === kode);
-        const namaKelas = infoKelas ? infoKelas.nama : kode; 
-
-        if (confirm(`Yakin mau hapus kelas "${namaKelas}"? \n\nSemua data di Firebase akan ikut terhapus secara permanen!`)) {
+    // ========== HAPUS KELAS ==========
+    window.hapusKelas = async function(kodeUnik) {
+        const kelas = daftarKelasDosen.find(k => k.kodeUnik === kodeUnik);
+        if (!kelas) return;
+        
+        if (confirm(`⚠️ YAKIN HAPUS KELAS "${kelas.nama}"?\nSemua data (Tugas, Absensi, Laporan) akan musnah selamanya.`)) {
+            const nidn = localStorage.getItem('user_id');
             try {
-                // 1. Hapus dari database server Firebase
-                await remove(ref(db, `database_kelas/${kode}`));
+                // Hapus dari data dosen
+                const dosenKelasRef = ref(db, `dosen/${nidn}/kelas`);
+                let kelasDosen = daftarKelasDosen.filter(k => k.kodeUnik !== kodeUnik);
+                await set(dosenKelasRef, kelasDosen);
                 
-                // 2. Bersihkan lokal & refresh
-                const databaseBaru = databaseKelas.filter(k => (k.kode || k.joinCode) !== kode);
-                localStorage.setItem('database_kelas', JSON.stringify(databaseBaru));
+                // Sapu jagat dari Firebase
+                await remove(ref(db, `database_kelas/${kodeUnik}`));
+                await remove(ref(db, `tugas/${kodeUnik}`));
+                await remove(ref(db, `absensi/${kodeUnik}`));
+                await remove(ref(db, `keaktifan/${kodeUnik}`));
+                await remove(ref(db, `kesulitan_mahasiswa/${kodeUnik}`));
                 
-                // Kalau kelas yang lagi dibuka yang dihapus, reset kelas_dosen_aktif
-                const kelasAktif = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-                if (kelasAktif && (kelasAktif.kode || kelasAktif.joinCode) === kode) {
-                    localStorage.removeItem('kelas_dosen_aktif');
+                alert(`✅ Kelas "${kelas.nama}" berhasil dilenyapkan!`);
+                
+                if (kelasTerpilih === kodeUnik) {
+                    kelasTerpilih = null;
+                    document.getElementById('info-kelas-aktif').classList.add('hidden');
+                    document.getElementById('daftar-laporan').innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Pilih kelas terlebih dahulu</div>';
+                    document.getElementById('daftar-keaktifan').innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Pilih kelas terlebih dahulu</div>';
+                    document.getElementById('total-mahasiswa').innerText = '0';
+                    document.getElementById('total-tugas').innerText = '0';
+                    document.getElementById('total-laporan').innerText = '0';
+                    document.getElementById('rata-keaktifan-kelas').innerText = '0%';
                 }
-
-                alert(`Kelas "${namaKelas}" berhasil dihapus dari server! 🗑️`);
-                location.reload();
+                await loadDosenKelas();
             } catch (error) {
-                alert("Gagal menghapus kelas dari server: " + error.message);
+                alert("Gagal menghapus: " + error.message);
             }
         }
     };
+    
+    window.hapusKelasYangAktif = function() {
+        if (kelasTerpilih) window.hapusKelas(kelasTerpilih);
+    };
 
-    // 🚨 PERBAIKAN: MASTER INITIALISASI (SATPAM + SINKRONISASI CLOUD) 🚨
-    const startAppDosen = async () => {
-        // --- 1. SATPAM PINTU MASUK DOSEN ---
-        const userRole = localStorage.getItem('user_role');
-        if (!userRole) {
-            alert("Sesi berakhir. Silakan login kembali.");
-            window.location.href = "index.html"; 
-            return; 
-        }
-        if (userRole === 'mahasiswa') {
-            window.location.href = "dashboard.html"; // Tendang balik mahasiswa
-            return; 
-        }
-
+    // ========== MODAL BUAT KELAS ==========
+    window.bukaModalBuatKelas = function() {
+        const modal = document.getElementById('buat-kelas-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    };
+    
+    window.tutupModalBuatKelas = function() {
+        const modal = document.getElementById('buat-kelas-modal');
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+    
+    window.buatKelasBaru = async function() {
+        const nama = document.getElementById('nama-kelas-baru').value.trim();
+        const hari = document.getElementById('hari-kelas-baru').value;
+        const jamMulai = document.getElementById('jam-kelas-baru').value;
+        const tema = document.getElementById('tema-kelas-baru').value;
+        const nidn = localStorage.getItem('user_id');
         const namaDosen = localStorage.getItem('user_nama') || 'Dosen';
-        document.getElementById('dosen-profile-name').innerHTML = `Dosen: <b class="text-white">${namaDosen}</b>`;
+        
+        if (!nama) return alert("Nama kelas wajib diisi!");
+        
+        let kodeUnik = document.getElementById('kode-join-kelas').value.trim().toUpperCase();
+        if (!kodeUnik) {
+            kodeUnik = Math.random().toString(36).substring(2, 8).toUpperCase();
+        } else if (kodeUnik.length < 4) {
+            return alert("Kode join minimal 4 karakter!");
+        }
 
-        // --- 2. SINKRONISASI CLOUD: TARIK KELAS MILIK DOSEN INI ---
+        const kelasBaru = {
+            nama: nama,
+            dosen: namaDosen,
+            nidn: nidn,
+            hari: hari,
+            jam_mulai: jamMulai,
+            tema: tema,
+            joinCode: kodeUnik,
+            kode: kodeUnik,
+            kodeUnik: kodeUnik,
+            createdAt: Date.now()
+        };
+        
         try {
-            const snapshot = await get(ref(db, 'database_kelas'));
-            let kelasDosenIni = [];
+            // Simpan ke publik (untuk mahasiswa join)
+            await set(ref(db, `database_kelas/${kodeUnik}`), kelasBaru);
             
-            if (snapshot.exists()) {
-                const semuaKelas = snapshot.val();
-                // Saring cuma kelas yang dibikin sama dosen ini
-                for (const key in semuaKelas) {
-                    if (semuaKelas[key].dosen === namaDosen) {
-                        let kls = semuaKelas[key];
-                        kls.kode = key; 
-                        kelasDosenIni.push(kls);
+            // Simpan ke profil dosen
+            const dosenKelasRef = ref(db, `dosen/${nidn}/kelas`);
+            let kelasDosenBaru = [...daftarKelasDosen, kelasBaru];
+            await set(dosenKelasRef, kelasDosenBaru);
+            
+            alert(`✅ Berhasil! Kode Kelas: ${kodeUnik}`);
+            window.tutupModalBuatKelas();
+            
+            // Reset & Refresh
+            document.getElementById('nama-kelas-baru').value = '';
+            document.getElementById('kode-join-kelas').value = '';
+            
+            await loadDosenKelas();
+            await window.pilihKelas(kodeUnik);
+        } catch (error) {
+            alert("Gagal membuat kelas: " + error.message);
+        }
+    };
+
+    // ========== LOAD DATA TABS ==========
+    async function loadLaporanKesulitan() {
+        if (!kelasTerpilih) return;
+        const container = document.getElementById('daftar-laporan');
+        
+        onValue(ref(db, `kesulitan_mahasiswa/${kelasTerpilih}`), (snapshot) => {
+            if (!snapshot.exists()) {
+                container.innerHTML = `<div class="p-8 text-center text-slate-400 text-sm">✨ Aman sentosa. Belum ada laporan.</div>`;
+                document.getElementById('total-laporan').innerText = '0';
+                document.getElementById('kesulitan-badge').classList.add('hidden');
+                return;
+            }
+            
+            const list = [];
+            snapshot.forEach(c => list.push({ id: c.key, ...c.val() }));
+            list.sort((a, b) => b.waktu - a.waktu);
+            
+            const blmBaca = list.filter(l => l.status === 'belum_dibaca').length;
+            document.getElementById('total-laporan').innerText = list.length;
+            
+            const badge = document.getElementById('kesulitan-badge');
+            if (blmBaca > 0) { badge.classList.remove('hidden'); badge.innerText = blmBaca; } 
+            else { badge.classList.add('hidden'); }
+            
+            container.innerHTML = list.map(l => `
+                <div class="p-5 hover:bg-slate-50 transition-all ${l.status === 'belum_dibaca' ? 'bg-amber-50/30' : ''}">
+                    <div class="flex justify-between items-start mb-3">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="font-bold text-slate-800 text-sm">${l.nama || l.nim}</span>
+                                ${l.status === 'belum_dibaca' ? '<span class="bg-amber-500 text-white text-[8px] px-2 py-0.5 rounded-full">Baru</span>' : ''}
+                            </div>
+                            <p class="text-[10px] text-slate-500">📚 Topik: ${l.judul || 'Umum'}</p>
+                        </div>
+                        <button onclick="window.bukaPesanModal('${l.nim}', '${l.nama || l.nim}', '${kelasTerpilih}', '${l.id}')" 
+                            class="bg-indigo-50 text-indigo-600 px-4 py-2 rounded-xl text-[10px] font-bold hover:bg-indigo-100 transition">
+                            💬 Respon
+                        </button>
+                    </div>
+                    <p class="text-xs text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100">${l.pesan}</p>
+                </div>
+            `).join('');
+        });
+    }
+
+ // ==========================================
+    // LOAD KEAKTIFAN MAHASISWA (RUMUS ASLI 100%)
+    // ==========================================
+    async function loadKeaktifanMahasiswa() {
+        if (!kelasTerpilih) return;
+        const container = document.getElementById('daftar-keaktifan');
+        container.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm animate-pulse">Menghitung keaktifan nyata... 🧮</div>';
+        
+        try {
+            // 1. Ambil daftar mahasiswa yang gabung di kelas ini
+            const mhsSnap = await get(ref(db, `mahasiswa`));
+            const listMhs = [];
+            
+            if (mhsSnap.exists()) {
+                for (const [nim, data] of Object.entries(mhsSnap.val())) {
+                    const kelasMhs = data.kelas || [];
+                    const terdaftar = (Array.isArray(kelasMhs) ? kelasMhs : Object.values(kelasMhs)).some(k => (k.kodeUnik || k.joinCode || k.kode) === kelasTerpilih);
+                    if (terdaftar) listMhs.push({ nim, nama: data.user_nama || data.nama || nim });
+                }
+            }
+            
+            document.getElementById('total-mahasiswa').innerText = listMhs.length;
+            if (listMhs.length === 0) {
+                container.innerHTML = '<div class="p-8 text-center text-slate-400 text-sm">Belum ada mahasiswa gabung.</div>';
+                document.getElementById('rata-keaktifan-kelas').innerText = '0%';
+                return;
+            }
+
+            // 2. Ambil TOTAL TUGAS yang udah dibikin sama dosen di kelas ini
+            const tugasSnap = await get(ref(db, `tugas/${kelasTerpilih}`));
+            let totalTugas = 0;
+            let listIdTugas = [];
+            
+            if (tugasSnap.exists()) {
+                const dataTugas = tugasSnap.val();
+                listIdTugas = Object.keys(dataTugas);
+                totalTugas = listIdTugas.length;
+            }
+            
+            let totalSemuaKeaktifan = 0;
+            const dataFinal = [];
+
+           // 3. Hitung persentase masing-masing mahasiswa
+            for (const m of listMhs) {
+                let tugasSelesai = 0;
+                
+                // Cek ke dalam Firebase, berapa tugas yang udah dia setor?
+                if (totalTugas > 0) {
+                    for (const idTugas of listIdTugas) {
+                        // Tarik SEMUA jawaban di tugas ini dulu
+                        const jawabanSnap = await get(ref(db, `jawaban_tugas/${kelasTerpilih}/${idTugas}`));
+                        
+                        if (jawabanSnap.exists()) {
+                            let sudahNgerjain = false;
+                            const semuaJawaban = jawabanSnap.val();
+                            
+                            // Cek satu-satu: Cocokin pakai NIM (Sistem Baru) ATAU Nama (Sistem Lama)
+                            for (const keyJawaban in semuaJawaban) {
+                                const dataJawab = semuaJawaban[keyJawaban];
+                                if (keyJawaban === m.nim || dataJawab.nim === m.nim || dataJawab.nama === m.nama) {
+                                    sudahNgerjain = true;
+                                    break;
+                                }
+                            }
+                            
+                            if (sudahNgerjain) {
+                                tugasSelesai++;
+                            }
+                        }
                     }
                 }
-            }
-            // Simpan ke lokal biar UI gampang ngebacanya
-            localStorage.setItem('database_kelas', JSON.stringify(kelasDosenIni));
-        } catch (error) {
-            console.error("Gagal menarik data kelas dari Firebase:", error);
-        }
+                
+                // RUMUS ASLI: (Tugas Selesai / Total Tugas) * 100%
+                let nilaiKeaktifan = totalTugas === 0 ? 0 : Math.round((tugasSelesai / totalTugas) * 100);
+                
+                // Update keaktifannya di database biar terekam
+                await set(ref(db, `keaktifan/${kelasTerpilih}/${m.nim}`), { nilai: nilaiKeaktifan });
 
-        // --- 3. RENDER TAMPILAN ---
-        window.tampilkanKelasSidebar();
-        
-        // Panggil kelas terakhir yang dibuka (kalau ada dan valid)
-        const last = JSON.parse(localStorage.getItem('kelas_dosen_aktif'));
-        const dbKelasUpdate = JSON.parse(localStorage.getItem('database_kelas')) || [];
-        
-        if (last && dbKelasUpdate.some(k => (k.kode || k.joinCode) === (last.kode || last.joinCode))) {
-            window.updateUIManajemen(last);
-        } else if (dbKelasUpdate.length > 0) {
-            // Kalau nggak ada history, otomatis buka kelas pertama
-            window.pilihKelas(dbKelasUpdate[0].kode || dbKelasUpdate[0].joinCode);
+                totalSemuaKeaktifan += nilaiKeaktifan;
+                dataFinal.push({ ...m, nilai: nilaiKeaktifan, tugasSelesai, totalTugas });
+            }
+            
+            // Urutkan dari mahasiswa yang paling rajin (nilai tertinggi)
+            dataFinal.sort((a, b) => b.nilai - a.nilai);
+            
+            // Hitung rata-rata kelas
+            const rataRata = Math.round(totalSemuaKeaktifan / listMhs.length);
+            document.getElementById('rata-keaktifan-kelas').innerText = rataRata + '%';
+            
+            // 4. Render ke Layar
+            container.innerHTML = dataFinal.map(m => {
+                let w = 'bg-red-500', s = '🔴 Kurang Aktif';
+                if (m.nilai >= 80) { w = 'bg-emerald-500'; s = '🟢 Sangat Aktif'; }
+                else if (m.nilai >= 60) { w = 'bg-blue-500'; s = '🔵 Cukup Aktif'; }
+                else if (m.nilai >= 40) { w = 'bg-yellow-500'; s = '🟡 Mulai Bergerak'; }
+                
+                return `
+                    <div class="p-4 hover:bg-slate-50 transition-all">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <span class="font-bold text-slate-800 text-sm">${m.nama}</span> 
+                                <span class="text-[9px] text-slate-400 ml-1">${m.nim}</span>
+                            </div>
+                            <span class="text-xs font-bold ${m.nilai < 40 ? 'text-red-500' : 'text-emerald-600'}">${m.nilai}%</span>
+                        </div>
+                        <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                            <div class="h-full ${w} rounded-full transition-all duration-1000" style="width: ${m.nilai}%"></div>
+                        </div>
+                        <div class="flex justify-between items-center mt-2">
+                            <p class="text-[9px] text-slate-400 font-bold">${s} <span class="font-normal text-slate-400">(${m.tugasSelesai}/${m.totalTugas} Tugas)</span></p>
+                            ${m.nilai < 50 && m.totalTugas > 0 ? `
+                                <button onclick="window.bukaPesanModal('${m.nim}', '${m.nama}', '${kelasTerpilih}', null)" 
+                                    class="text-[9px] bg-amber-100 text-amber-700 px-3 py-1 rounded-lg hover:bg-amber-200 transition">
+                                    💬 Tanya Kendala
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+        } catch (error) {
+            console.error(error);
+            container.innerHTML = '<div class="p-8 text-center text-red-400 text-sm">Gagal memuat data perhitungan.</div>';
         }
+    }
+
+    async function updateStatistik() {
+        if (!kelasTerpilih) return;
+        try {
+            const s = await get(ref(db, `tugas/${kelasTerpilih}`));
+            document.getElementById('total-tugas').innerText = s.exists() ? Object.keys(s.val()).length : '0';
+        } catch(e) { console.error(e); }
+    }
+
+    // ========== PESAN & MODALS ==========
+    window.bukaPesanModal = function(nim, nama, kelasKode, laporanId) {
+        document.getElementById('pesan-nim').value = nim;
+        document.getElementById('pesan-kelas-kode').value = kelasKode;
+        document.getElementById('target-mahasiswa').innerHTML = `<span class="font-bold text-indigo-600">${nama}</span>`;
+        document.getElementById('pesan-judul').value = '';
+        document.getElementById('pesan-isi').value = '';
+        
+        if (laporanId) update(ref(db, `kesulitan_mahasiswa/${kelasKode}/${laporanId}`), { status: 'dibaca' });
+        
+        const modal = document.getElementById('pesan-modal');
+        modal.classList.remove('hidden');
+        setTimeout(() => modal.classList.remove('opacity-0'), 10);
+    };
+    
+    window.tutupPesanModal = function() {
+        const modal = document.getElementById('pesan-modal');
+        modal.classList.add('opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    };
+    
+    window.kirimPesan = async function() {
+        const nim = document.getElementById('pesan-nim').value;
+        const judul = document.getElementById('pesan-judul').value;
+        const isi = document.getElementById('pesan-isi').value;
+        if (!judul || !isi) return alert("Pesan tidak boleh kosong!");
+        
+        try {
+            await push(ref(db, `notifikasi_mahasiswa/${nim}`), {
+                dariDosen: localStorage.getItem('user_nama') || 'Dosen',
+                judul, pesan: isi,
+                kelasKode: document.getElementById('pesan-kelas-kode').value,
+                waktu: Date.now(), dibaca: false
+            });
+            alert("✅ Pesan terkirim!");
+            window.tutupPesanModal();
+        } catch (e) { alert("Gagal: " + e.message); }
+    };
+    
+    window.bukaKesulitanModal = () => window.setTab('laporan');
+
+    window.setTab = function(tab) {
+        currentTab = tab;
+        ['laporan', 'keaktifan'].forEach(t => {
+            const isTab = t === tab;
+            document.getElementById(`tab-${t}`).classList.toggle('hidden', !isTab);
+            const btn = document.getElementById(`tab-${t}-btn`);
+            btn.className = `px-5 py-2 rounded-xl text-xs font-bold transition ${isTab ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'}`;
+        });
+        if (tab === 'keaktifan' && kelasTerpilih) loadKeaktifanMahasiswa();
     };
 
-    // Jalankan mesin utama
-    startAppDosen();
-
     window.toggleSidebar = () => document.getElementById('sidebar').classList.toggle('sidebar-closed');
-    window.tampilkanNamaFile = (input) => { if (input.files[0]) document.getElementById('nama-file-terpilih').innerText = input.files[0].name; };
-</script>
 
-</div>
+    // ========== START APP SATPAM ==========
+    async function startApp() {
+        const userRole = localStorage.getItem('user_role');
+        if (!userRole) {
+            alert("Silakan login."); window.location.href = "index.html"; return;
+        }
+        
+        const nama = localStorage.getItem('user_nama') || "Dosen Pengampu";
+        const id = localStorage.getItem('user_id') || "Dosen";
+        
+        document.getElementById('sidebar-user-info').innerHTML = `
+            <p class="text-[11px] font-bold text-white truncate">${nama}</p>
+            <p class="text-[9px] text-slate-500 font-medium">${id}</p>
+        `;
+        document.getElementById('avatar-img').src = `https://ui-avatars.com/api/?name=${encodeURIComponent(nama)}&background=6366f1&color=fff`;
+        
+        await loadDosenKelas();
+    }
+    
+    startApp();
+</script>
 </body>
 </html>
