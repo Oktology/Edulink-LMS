@@ -6,15 +6,6 @@
     <title>Login | Edulink</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="global.js"></script>
-
-    <script type="importmap">
-  {
-    "imports": {
-      "firebase/app": "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js",
-      "firebase/database": "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js"
-    }
-  }
-</script>
 </head>
 <body class="bg-slate-50 min-h-screen flex items-center justify-center p-6 transition-colors duration-500" id="body-bg">
 
@@ -65,6 +56,12 @@
                         class="w-full mt-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
                 </div>
 
+                <div id="field-konfirmasi-pass" class="hidden overflow-hidden transition-all duration-300">
+                    <label class="text-xs font-black text-slate-400 uppercase tracking-widest">Konfirmasi Kata Sandi</label>
+                    <input type="password" id="user-pass-confirm" placeholder="Ulangi kata sandi" 
+                        class="w-full mt-2 p-4 bg-slate-50 border border-slate-200 rounded-2xl outline-none focus:border-blue-500 transition text-sm">
+                </div>
+
                 <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 mt-4">
                     Masuk ke Portal
                 </button>
@@ -79,27 +76,58 @@
     </div>
 
     <script>
-    // --- 1. INISIALISASI DATABASE SIMULASI DI LOCALSTORAGE ---
-    // Biar data pendaftaran gak hilang kalau di-refresh
-    if (!localStorage.getItem('db_mhs')) {
-        localStorage.setItem('db_mhs', JSON.stringify({
-            "2026001": "Octoryo Qoffanus Shidqi",
-            "2026002": "Budi Santoso",
-            "12345": "Mahasiswa Tester"
-        }));
-    }
-    if (!localStorage.getItem('db_dsn')) {
-        localStorage.setItem('db_dsn', JSON.stringify({
-            "0612345": "Pak Dosen Informatika",
-            "001": "Admin Dosen"
-        }));
+    // ========== FUNGSI HASH SEDERHANA (Simulasi, di production pake library resmi) ==========
+    // Fungsi hash sederhana untuk demo (di sistem real pakai bcrypt atau library crypto)
+    function simpleHash(str) {
+        let hash = 0;
+        if (str.length === 0) return hash;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return Math.abs(hash).toString(16); // return hex string
     }
 
-    // --- 2. VARIABEL STATE ---
+    // ========== 1. INISIALISASI DATABASE DENGAN PASSWORD ==========
+    // Struktur data baru: setiap user punya { nama, password_hash }
+    if (!localStorage.getItem('db_mhs')) {
+        const defaultMhs = {
+            "2026001": {
+                nama: "Octoryo Qoffanus Shidqi",
+                password_hash: simpleHash("rahasia123") // default password
+            },
+            "2026002": {
+                nama: "Budi Santoso",
+                password_hash: simpleHash("budi123")
+            },
+            "12345": {
+                nama: "Mahasiswa Tester",
+                password_hash: simpleHash("test123")
+            }
+        };
+        localStorage.setItem('db_mhs', JSON.stringify(defaultMhs));
+    }
+    
+    if (!localStorage.getItem('db_dsn')) {
+        const defaultDsn = {
+            "0612345": {
+                nama: "Pak Dosen Informatika",
+                password_hash: simpleHash("dosen123")
+            },
+            "001": {
+                nama: "Admin Dosen",
+                password_hash: simpleHash("admin123")
+            }
+        };
+        localStorage.setItem('db_dsn', JSON.stringify(defaultDsn));
+    }
+
+    // ========== 2. VARIABEL STATE ==========
     let currentRole = 'mhs';
     let isLoginMode = true; // True = Mode Masuk, False = Mode Daftar
 
-    // --- 3. FUNGSI GANTI ROLE (MHS/DSN) ---
+    // ========== 3. FUNGSI GANTI ROLE (MHS/DSN) ==========
     function setRole(role) {
         currentRole = role;
         const btnMhs = document.getElementById('role-mhs');
@@ -126,112 +154,201 @@
         }
     }
 
-    // --- 4. FUNGSI TOGGLE LOGIN / REGISTER ---
+    // ========== 4. FUNGSI TOGGLE LOGIN / REGISTER ==========
     function toggleMode() {
         isLoginMode = !isLoginMode;
         
         const judul = document.getElementById('judul-form');
         const subJudul = document.getElementById('sub-judul-form');
         const fieldNama = document.getElementById('field-nama');
+        const fieldKonfirmasi = document.getElementById('field-konfirmasi-pass');
         const inputNama = document.getElementById('user-name');
+        const inputPass = document.getElementById('user-pass');
+        const inputPassConfirm = document.getElementById('user-pass-confirm');
         const btnSubmit = document.getElementById('btn-submit');
         const teksToggle = document.getElementById('teks-toggle');
 
         if (isLoginMode) {
-            // MODE LOGIN
+            // MODE LOGIN - Sederhana
             judul.innerText = "Selamat Datang";
             subJudul.innerText = "Masuk untuk melanjutkan ke portal kamu.";
             fieldNama.classList.add('hidden');
+            fieldKonfirmasi.classList.add('hidden');
             inputNama.removeAttribute('required');
+            inputPassConfirm.removeAttribute('required');
+            inputPass.value = ''; // Kosongkan password saat toggle
             btnSubmit.innerText = "Masuk ke Portal";
             teksToggle.innerHTML = `Belum punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Daftar sekarang</button>`;
         } else {
-            // MODE REGISTER
+            // MODE REGISTER - Butuh nama & konfirmasi password
             judul.innerText = "Daftar Akun";
             subJudul.innerText = "Bergabung dengan EduLink hari ini.";
             fieldNama.classList.remove('hidden');
+            fieldKonfirmasi.classList.remove('hidden');
             inputNama.setAttribute('required', 'true');
+            inputPassConfirm.setAttribute('required', 'true');
             btnSubmit.innerText = "Daftar Sekarang 🚀";
             teksToggle.innerHTML = `Sudah punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Masuk di sini</button>`;
         }
     }
 
-    // --- 5. FUNGSI UTAMA (HANDLE LOGIN & REGISTER) ---
-    // --- 5. FUNGSI UTAMA (HANDLE LOGIN & REGISTER SMART MODE) ---
+    // ========== 5. VALIDASI PASSWORD SAAT LOGIN ==========
+    function validateLogin(inputID, inputPassword, role) {
+        const dbKey = role === 'mhs' ? 'db_mhs' : 'db_dsn';
+        const database = JSON.parse(localStorage.getItem(dbKey));
+        
+        // Cek apakah ID ada di database
+        if (!database[inputID]) {
+            return { success: false, message: "ID tidak ditemukan!" };
+        }
+        
+        // Ambil hash password dari database
+        const storedUser = database[inputID];
+        const storedPasswordHash = storedUser.password_hash;
+        
+        // Hash password yang dimasukkan user
+        const inputPasswordHash = simpleHash(inputPassword);
+        
+        // Bandingkan hash
+        if (storedPasswordHash === inputPasswordHash) {
+            return { 
+                success: true, 
+                message: "Login berhasil!",
+                nama: storedUser.nama
+            };
+        } else {
+            return { success: false, message: "Password salah! Silakan coba lagi." };
+        }
+    }
+
+    // ========== 6. FUNGSI REGISTER DENGAN PASSWORD ==========
+    function registerUser(inputID, inputNama, inputPassword, role) {
+        const dbKey = role === 'mhs' ? 'db_mhs' : 'db_dsn';
+        let database = JSON.parse(localStorage.getItem(dbKey));
+        
+        // Cek apakah ID sudah ada di database role yang sama
+        if (database[inputID]) {
+            return { success: false, message: "ID sudah terdaftar! Silakan login." };
+        }
+        
+        // Cek juga cross-check ke database lain (misal NIM sudah dipakai jadi dosen)
+        const otherDbKey = role === 'mhs' ? 'db_dsn' : 'db_mhs';
+        const otherDatabase = JSON.parse(localStorage.getItem(otherDbKey));
+        if (otherDatabase[inputID]) {
+            return { success: false, message: role === 'mhs' ? "NIM ini sudah terdaftar sebagai DOSEN!" : "NIDN ini sudah terdaftar sebagai MAHASISWA!" };
+        }
+        
+        // Simpan user baru dengan password hash
+        database[inputID] = {
+            nama: inputNama,
+            password_hash: simpleHash(inputPassword)
+        };
+        
+        localStorage.setItem(dbKey, JSON.stringify(database));
+        return { success: true, message: "Pendaftaran berhasil!" };
+    }
+
+    // ========== 7. FUNGSI UTAMA (HANDLE LOGIN & REGISTER) ==========
     function handleAuth(event) {
         event.preventDefault(); // Mencegah halaman refresh
 
         const inputID = document.getElementById('user-id').value.trim();
-        const inputNama = document.getElementById('user-name').value.trim();
-
-        // Tarik kedua database sekaligus biar sistem lebih peka
-        let dbMhs = JSON.parse(localStorage.getItem('db_mhs'));
-        let dbDsn = JSON.parse(localStorage.getItem('db_dsn'));
-
+        const inputPassword = document.getElementById('user-pass').value;
+        
         if (isLoginMode) {
-            // LOGIC LOGIN PINTAR (SMART LOGIN)
-            if (currentRole === 'mhs' && dbMhs[inputID]) {
-                // Login normal Mhs
-                prosesMasuk(inputID, dbMhs[inputID], 'dashboard.html');
-            } 
-            else if (currentRole === 'dsn' && dbDsn[inputID]) {
-                // Login normal Dosen
-                prosesMasuk(inputID, dbDsn[inputID], 'dosen.html');
-            } 
-            else if (currentRole === 'mhs' && dbDsn[inputID]) {
-                // Lupa klik tombol Dosen! Sistem otomatis bantu
-                alert("NIDN ini terdaftar sebagai DOSEN! Kita langsung arahkan ke Dashboard Dosen ya 🚀");
-                prosesMasuk(inputID, dbDsn[inputID], 'dosen.html');
-            } 
-            else if (currentRole === 'dsn' && dbMhs[inputID]) {
-                // Lupa klik tombol Mhs!
-                alert("NIM ini terdaftar sebagai MAHASISWA! Kita arahkan ke Portal Mahasiswa ya 🚀");
-                prosesMasuk(inputID, dbMhs[inputID], 'dashboard.html');
-            } 
-            else {
-                // Beneran belum daftar
-                alert("Waduh, NIM/NIDN kamu belum terdaftar! Silakan klik 'Daftar sekarang' dulu ya.");
+            // ========== LOGIN MODE ==========
+            if (!inputPassword) {
+                alert("Harap masukkan password!");
+                return;
             }
-
-        } else {
-            // LOGIC REGISTER
-            const dbKey = currentRole === 'mhs' ? 'db_mhs' : 'db_dsn';
-            let database = currentRole === 'mhs' ? dbMhs : dbDsn;
-
-            // Cek apakah ID udah ada di salah satu database biar ga dobel
-            if (dbMhs[inputID] || dbDsn[inputID]) {
-                alert("ID ini sudah pernah terdaftar! Silakan langsung login aja.");
-                toggleMode(); // Balikin ke mode masuk
+            
+            // Coba login dengan role yang dipilih
+            let result = validateLogin(inputID, inputPassword, currentRole);
+            
+            if (result.success) {
+                // Login berhasil dengan role yang sesuai
+                const tujuan = currentRole === 'mhs' ? 'dashboard.html' : 'dosen.html';
+                const roleText = currentRole === 'mhs' ? 'mahasiswa' : 'dosen';
+                
+                localStorage.setItem('user_id', inputID);
+                localStorage.setItem('user_nama', result.nama);
+                localStorage.setItem('user_role', roleText);
+                
+                alert(`✅ Login berhasil! Selamat datang, ${result.nama}`);
+                
+                document.getElementById('btn-submit').innerText = "Memproses...";
+                setTimeout(() => {
+                    window.location.href = tujuan;
+                }, 500);
             } else {
-                // Tambahin user baru
-                database[inputID] = inputNama;
-                localStorage.setItem(dbKey, JSON.stringify(database));
-
-                alert("Pendaftaran berhasil! Selamat datang di EduLink 🚀");
-                prosesMasuk(inputID, inputNama, currentRole === 'mhs' ? 'index.html' : 'dosen.html');
+                // Coba cek apakah ID terdaftar di role lain? (kasus salah pilih role)
+                const otherRole = currentRole === 'mhs' ? 'dsn' : 'mhs';
+                const otherResult = validateLogin(inputID, inputPassword, otherRole);
+                
+                if (otherResult.success) {
+                    const jawab = confirm(`❓ Apakah Anda sebenarnya seorang ${otherRole === 'mhs' ? 'MAHASISWA' : 'DOSEN'}?\n\n${result.message}\n\nKlik OK untuk login sebagai ${otherRole === 'mhs' ? 'Mahasiswa' : 'Dosen'} atau Cancel untuk tetap di role ini.`);
+                    
+                    if (jawab) {
+                        // Login dengan role yang benar
+                        const tujuan = otherRole === 'mhs' ? 'dashboard.html' : 'dosen.html';
+                        const roleText = otherRole === 'mhs' ? 'mahasiswa' : 'dosen';
+                        
+                        localStorage.setItem('user_id', inputID);
+                        localStorage.setItem('user_nama', otherResult.nama);
+                        localStorage.setItem('user_role', roleText);
+                        
+                        alert(`✅ Login berhasil! Selamat datang, ${otherResult.nama}`);
+                        
+                        document.getElementById('btn-submit').innerText = "Memproses...";
+                        setTimeout(() => {
+                            window.location.href = tujuan;
+                        }, 500);
+                    } else {
+                        alert(result.message);
+                    }
+                } else {
+                    alert(result.message);
+                }
+            }
+            
+        } else {
+            // ========== REGISTER MODE ==========
+            const inputNama = document.getElementById('user-name').value.trim();
+            const inputPasswordConfirm = document.getElementById('user-pass-confirm').value;
+            
+            // Validasi input
+            if (!inputNama) {
+                alert("Harap masukkan nama lengkap!");
+                return;
+            }
+            
+            if (inputPassword.length < 4) {
+                alert("Password minimal 4 karakter untuk keamanan!");
+                return;
+            }
+            
+            if (inputPassword !== inputPasswordConfirm) {
+                alert("Password dan konfirmasi password tidak cocok!");
+                return;
+            }
+            
+            // Proses registrasi
+            const result = registerUser(inputID, inputNama, inputPassword, currentRole);
+            
+            if (result.success) {
+                alert(result.message + " Silakan login dengan password Anda.");
+                toggleMode(); // Balik ke mode login
+                document.getElementById('user-pass').value = ''; // Kosongkan form password
+                document.getElementById('user-pass-confirm').value = '';
+                document.getElementById('user-name').value = '';
+            } else {
+                alert(result.message);
             }
         }
     }
-
-    // Fungsi pembantu biar kodenya bersih dan nggak diulang-ulang
-    function prosesMasuk(id, nama, halamanTujuan) {
-        localStorage.setItem('user_id', id);
-        localStorage.setItem('user_nama', nama);
-        
-        // 👉 INI DIA PENCATAT KTP-NYA
-        // Kalau tujuannya ke index.html, berarti dia Mahasiswa
-        if (halamanTujuan === 'dashboard.html') {
-            localStorage.setItem('user_role', 'mahasiswa');
-        } else {
-            // Kalau tujuannya ke tempat lain, berarti dia Dosen
-            localStorage.setItem('user_role', 'dosen');
-        }
-        
-        document.getElementById('btn-submit').innerText = "Memproses...";
-        setTimeout(() => {
-            window.location.href = halamanTujuan;
-        }, 500);
-    }
+    
+    // Initial: Pastikan field konfirmasi password tersembunyi di awal
+    document.getElementById('field-konfirmasi-pass').classList.add('hidden');
     </script>
 </body>
 </html>
