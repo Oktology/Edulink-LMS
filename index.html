@@ -75,280 +75,211 @@
         </div>
     </div>
 
-    <script>
-    // ========== FUNGSI HASH SEDERHANA (Simulasi, di production pake library resmi) ==========
-    // Fungsi hash sederhana untuk demo (di sistem real pakai bcrypt atau library crypto)
-    function simpleHash(str) {
-        let hash = 0;
-        if (str.length === 0) return hash;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash; // Convert to 32bit integer
-        }
-        return Math.abs(hash).toString(16); // return hex string
-    }
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, get, set } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-    // ========== 1. INISIALISASI DATABASE DENGAN PASSWORD ==========
-    // Struktur data baru: setiap user punya { nama, password_hash }
-    if (!localStorage.getItem('db_mhs')) {
-        const defaultMhs = {
-            "2026001": {
-                nama: "Octoryo Qoffanus Shidqi",
-                password_hash: simpleHash("rahasia123") // default password
-            },
-            "2026002": {
-                nama: "Budi Santoso",
-                password_hash: simpleHash("budi123")
-            },
-            "12345": {
-                nama: "Mahasiswa Tester",
-                password_hash: simpleHash("test123")
-            }
+        // ========== CONFIG FIREBASE ==========
+        const firebaseConfig = {
+            apiKey: "AIzaSyCbPRP947C2OwPMaLSqWfbFCOLEkBBrx8c",
+            authDomain: "edulink-v2.firebaseapp.com",
+            databaseURL: "https://edulink-v2-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "edulink-v2",
+            storageBucket: "edulink-v2.firebasestorage.app",
+            messagingSenderId: "450247433954",
+            appId: "1:450247433954:web:c3875535c4d1edc9a388bb"
         };
-        localStorage.setItem('db_mhs', JSON.stringify(defaultMhs));
-    }
-    
-    if (!localStorage.getItem('db_dsn')) {
-        const defaultDsn = {
-            "0612345": {
-                nama: "Pak Dosen Informatika",
-                password_hash: simpleHash("dosen123")
-            },
-            "001": {
-                nama: "Admin Dosen",
-                password_hash: simpleHash("admin123")
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        // ========== FUNGSI HASH SEDERHANA ==========
+        function simpleHash(str) {
+            let hash = 0;
+            if (str.length === 0) return hash;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; 
             }
-        };
-        localStorage.setItem('db_dsn', JSON.stringify(defaultDsn));
-    }
-
-    // ========== 2. VARIABEL STATE ==========
-    let currentRole = 'mhs';
-    let isLoginMode = true; // True = Mode Masuk, False = Mode Daftar
-
-    // ========== 3. FUNGSI GANTI ROLE (MHS/DSN) ==========
-    function setRole(role) {
-        currentRole = role;
-        const btnMhs = document.getElementById('role-mhs');
-        const btnDsn = document.getElementById('role-dsn');
-        const label = document.getElementById('label-id');
-        const input = document.getElementById('user-id');
-        const btnSubmit = document.getElementById('btn-submit');
-        const bannerSide = document.getElementById('banner-side');
-
-        if (role === 'mhs') {
-            btnMhs.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600";
-            btnDsn.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-blue-600";
-            label.innerText = "Nomor Induk Mahasiswa (NIM)";
-            input.placeholder = "Masukkan NIM kamu";
-            btnSubmit.className = "w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 mt-4";
-            bannerSide.classList.replace('bg-indigo-600', 'bg-blue-600');
-        } else {
-            btnDsn.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-indigo-600";
-            btnMhs.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-indigo-600";
-            label.innerText = "Nomor Induk Dosen (NIDN)";
-            input.placeholder = "Masukkan NIDN kamu";
-            btnSubmit.className = "w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 mt-4";
-            bannerSide.classList.replace('bg-blue-600', 'bg-indigo-600');
+            return Math.abs(hash).toString(16); 
         }
-    }
 
-    // ========== 4. FUNGSI TOGGLE LOGIN / REGISTER ==========
-    function toggleMode() {
-        isLoginMode = !isLoginMode;
-        
-        const judul = document.getElementById('judul-form');
-        const subJudul = document.getElementById('sub-judul-form');
-        const fieldNama = document.getElementById('field-nama');
-        const fieldKonfirmasi = document.getElementById('field-konfirmasi-pass');
-        const inputNama = document.getElementById('user-name');
-        const inputPass = document.getElementById('user-pass');
-        const inputPassConfirm = document.getElementById('user-pass-confirm');
-        const btnSubmit = document.getElementById('btn-submit');
-        const teksToggle = document.getElementById('teks-toggle');
+        // ========== VARIABEL STATE ==========
+        let currentRole = 'mhs';
+        let isLoginMode = true; 
 
-        if (isLoginMode) {
-            // MODE LOGIN - Sederhana
-            judul.innerText = "Selamat Datang";
-            subJudul.innerText = "Masuk untuk melanjutkan ke portal kamu.";
-            fieldNama.classList.add('hidden');
-            fieldKonfirmasi.classList.add('hidden');
-            inputNama.removeAttribute('required');
-            inputPassConfirm.removeAttribute('required');
-            inputPass.value = ''; // Kosongkan password saat toggle
-            btnSubmit.innerText = "Masuk ke Portal";
-            teksToggle.innerHTML = `Belum punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Daftar sekarang</button>`;
-        } else {
-            // MODE REGISTER - Butuh nama & konfirmasi password
-            judul.innerText = "Daftar Akun";
-            subJudul.innerText = "Bergabung dengan EduLink hari ini.";
-            fieldNama.classList.remove('hidden');
-            fieldKonfirmasi.classList.remove('hidden');
-            inputNama.setAttribute('required', 'true');
-            inputPassConfirm.setAttribute('required', 'true');
-            btnSubmit.innerText = "Daftar Sekarang 🚀";
-            teksToggle.innerHTML = `Sudah punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Masuk di sini</button>`;
-        }
-    }
+        // ========== FUNGSI GANTI ROLE ==========
+        window.setRole = function(role) {
+            currentRole = role;
+            const btnMhs = document.getElementById('role-mhs');
+            const btnDsn = document.getElementById('role-dsn');
+            const label = document.getElementById('label-id');
+            const input = document.getElementById('user-id');
+            const btnSubmit = document.getElementById('btn-submit');
+            const bannerSide = document.getElementById('banner-side');
 
-    // ========== 5. VALIDASI PASSWORD SAAT LOGIN ==========
-    function validateLogin(inputID, inputPassword, role) {
-        const dbKey = role === 'mhs' ? 'db_mhs' : 'db_dsn';
-        const database = JSON.parse(localStorage.getItem(dbKey));
-        
-        // Cek apakah ID ada di database
-        if (!database[inputID]) {
-            return { success: false, message: "ID tidak ditemukan!" };
-        }
-        
-        // Ambil hash password dari database
-        const storedUser = database[inputID];
-        const storedPasswordHash = storedUser.password_hash;
-        
-        // Hash password yang dimasukkan user
-        const inputPasswordHash = simpleHash(inputPassword);
-        
-        // Bandingkan hash
-        if (storedPasswordHash === inputPasswordHash) {
-            return { 
-                success: true, 
-                message: "Login berhasil!",
-                nama: storedUser.nama
-            };
-        } else {
-            return { success: false, message: "Password salah! Silakan coba lagi." };
-        }
-    }
-
-    // ========== 6. FUNGSI REGISTER DENGAN PASSWORD ==========
-    function registerUser(inputID, inputNama, inputPassword, role) {
-        const dbKey = role === 'mhs' ? 'db_mhs' : 'db_dsn';
-        let database = JSON.parse(localStorage.getItem(dbKey));
-        
-        // Cek apakah ID sudah ada di database role yang sama
-        if (database[inputID]) {
-            return { success: false, message: "ID sudah terdaftar! Silakan login." };
-        }
-        
-        // Cek juga cross-check ke database lain (misal NIM sudah dipakai jadi dosen)
-        const otherDbKey = role === 'mhs' ? 'db_dsn' : 'db_mhs';
-        const otherDatabase = JSON.parse(localStorage.getItem(otherDbKey));
-        if (otherDatabase[inputID]) {
-            return { success: false, message: role === 'mhs' ? "NIM ini sudah terdaftar sebagai DOSEN!" : "NIDN ini sudah terdaftar sebagai MAHASISWA!" };
-        }
-        
-        // Simpan user baru dengan password hash
-        database[inputID] = {
-            nama: inputNama,
-            password_hash: simpleHash(inputPassword)
-        };
-        
-        localStorage.setItem(dbKey, JSON.stringify(database));
-        return { success: true, message: "Pendaftaran berhasil!" };
-    }
-
-    // ========== 7. FUNGSI UTAMA (HANDLE LOGIN & REGISTER) ==========
-    function handleAuth(event) {
-        event.preventDefault(); // Mencegah halaman refresh
-
-        const inputID = document.getElementById('user-id').value.trim();
-        const inputPassword = document.getElementById('user-pass').value;
-        
-        if (isLoginMode) {
-            // ========== LOGIN MODE ==========
-            if (!inputPassword) {
-                alert("Harap masukkan password!");
-                return;
-            }
-            
-            // Coba login dengan role yang dipilih
-            let result = validateLogin(inputID, inputPassword, currentRole);
-            
-            if (result.success) {
-                // Login berhasil dengan role yang sesuai
-                const tujuan = currentRole === 'mhs' ? 'dashboard.html' : 'dosen.html';
-                const roleText = currentRole === 'mhs' ? 'mahasiswa' : 'dosen';
-                
-                localStorage.setItem('user_id', inputID);
-                localStorage.setItem('user_nama', result.nama);
-                localStorage.setItem('user_role', roleText);
-                
-                alert(`✅ Login berhasil! Selamat datang, ${result.nama}`);
-                
-                document.getElementById('btn-submit').innerText = "Memproses...";
-                setTimeout(() => {
-                    window.location.href = tujuan;
-                }, 500);
+            if (role === 'mhs') {
+                btnMhs.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-blue-600";
+                btnDsn.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-blue-600";
+                label.innerText = "Nomor Induk Mahasiswa (NIM)";
+                input.placeholder = "Masukkan NIM kamu";
+                btnSubmit.className = "w-full bg-blue-600 text-white py-4 rounded-2xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-100 mt-4";
+                bannerSide.classList.replace('bg-indigo-600', 'bg-blue-600');
             } else {
-                // Coba cek apakah ID terdaftar di role lain? (kasus salah pilih role)
-                const otherRole = currentRole === 'mhs' ? 'dsn' : 'mhs';
-                const otherResult = validateLogin(inputID, inputPassword, otherRole);
-                
-                if (otherResult.success) {
-                    const jawab = confirm(`❓ Apakah Anda sebenarnya seorang ${otherRole === 'mhs' ? 'MAHASISWA' : 'DOSEN'}?\n\n${result.message}\n\nKlik OK untuk login sebagai ${otherRole === 'mhs' ? 'Mahasiswa' : 'Dosen'} atau Cancel untuk tetap di role ini.`);
-                    
-                    if (jawab) {
-                        // Login dengan role yang benar
-                        const tujuan = otherRole === 'mhs' ? 'dashboard.html' : 'dosen.html';
-                        const roleText = otherRole === 'mhs' ? 'mahasiswa' : 'dosen';
-                        
-                        localStorage.setItem('user_id', inputID);
-                        localStorage.setItem('user_nama', otherResult.nama);
-                        localStorage.setItem('user_role', roleText);
-                        
-                        alert(`✅ Login berhasil! Selamat datang, ${otherResult.nama}`);
-                        
-                        document.getElementById('btn-submit').innerText = "Memproses...";
-                        setTimeout(() => {
-                            window.location.href = tujuan;
-                        }, 500);
-                    } else {
-                        alert(result.message);
+                btnDsn.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all bg-white shadow-sm text-indigo-600";
+                btnMhs.className = "flex-grow py-2 rounded-lg text-xs font-bold transition-all text-slate-500 hover:text-indigo-600";
+                label.innerText = "Nomor Induk Dosen (NIDN)";
+                input.placeholder = "Masukkan NIDN kamu";
+                btnSubmit.className = "w-full bg-indigo-600 text-white py-4 rounded-2xl font-bold hover:bg-indigo-700 transition shadow-lg shadow-indigo-100 mt-4";
+                bannerSide.classList.replace('bg-blue-600', 'bg-indigo-600');
+            }
+        };
+
+        // ========== FUNGSI TOGGLE LOGIN / REGISTER ==========
+        window.toggleMode = function() {
+            isLoginMode = !isLoginMode;
+            
+            const judul = document.getElementById('judul-form');
+            const subJudul = document.getElementById('sub-judul-form');
+            const fieldNama = document.getElementById('field-nama');
+            const fieldKonfirmasi = document.getElementById('field-konfirmasi-pass');
+            const inputNama = document.getElementById('user-name');
+            const inputPass = document.getElementById('user-pass');
+            const inputPassConfirm = document.getElementById('user-pass-confirm');
+            const btnSubmit = document.getElementById('btn-submit');
+            const teksToggle = document.getElementById('teks-toggle');
+
+            if (isLoginMode) {
+                judul.innerText = "Selamat Datang";
+                subJudul.innerText = "Masuk untuk melanjutkan ke portal kamu.";
+                fieldNama.classList.add('hidden');
+                fieldKonfirmasi.classList.add('hidden');
+                inputNama.removeAttribute('required');
+                inputPassConfirm.removeAttribute('required');
+                inputPass.value = ''; 
+                btnSubmit.innerText = "Masuk ke Portal";
+                teksToggle.innerHTML = `Belum punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Daftar sekarang</button>`;
+            } else {
+                judul.innerText = "Daftar Akun";
+                subJudul.innerText = "Bergabung dengan EduLink hari ini.";
+                fieldNama.classList.remove('hidden');
+                fieldKonfirmasi.classList.remove('hidden');
+                inputNama.setAttribute('required', 'true');
+                inputPassConfirm.setAttribute('required', 'true');
+                btnSubmit.innerText = "Daftar Sekarang 🚀";
+                teksToggle.innerHTML = `Sudah punya akun? <button onclick="toggleMode()" type="button" class="text-blue-600 font-bold hover:underline ml-1">Masuk di sini</button>`;
+            }
+        };
+
+        // ========== FUNGSI UTAMA (HANDLE LOGIN & REGISTER KE AWAN) ==========
+        window.handleAuth = async function(event) {
+            event.preventDefault(); 
+
+            const inputID = document.getElementById('user-id').value.trim();
+            const inputPassword = document.getElementById('user-pass').value;
+            const btnSubmit = document.getElementById('btn-submit');
+            const teksAsliTombol = btnSubmit.innerText;
+
+            btnSubmit.innerText = "Memeriksa Server... ⏳";
+            btnSubmit.disabled = true;
+            btnSubmit.classList.add('opacity-70', 'cursor-wait');
+
+            try {
+                if (isLoginMode) {
+                    // ==============================
+                    // LOGIKA LOGIN (CEK KE FIREBASE)
+                    // ==============================
+                    if (!inputPassword) {
+                        alert("Harap masukkan password!");
+                        resetTombol();
+                        return;
                     }
+                    
+                    const dbPath = `users/${currentRole}/${inputID}`;
+                    const snapshot = await get(ref(db, dbPath));
+
+                    if (snapshot.exists()) {
+                        const userData = snapshot.val();
+                        const inputPasswordHash = simpleHash(inputPassword);
+
+                        if (userData.password_hash === inputPasswordHash) {
+                            // Bikin Sesi Lokal
+                            const tujuan = currentRole === 'mhs' ? 'dashboard.html' : 'dosen.html';
+                            const roleText = currentRole === 'mhs' ? 'mahasiswa' : 'dosen';
+                            
+                            localStorage.setItem('user_id', inputID);
+                            localStorage.setItem('user_nama', userData.nama);
+                            localStorage.setItem('user_role', roleText);
+                            
+                            alert(`✅ Login berhasil! Selamat datang, ${userData.nama}`);
+                            btnSubmit.innerText = "Mengalihkan... 🚀";
+                            setTimeout(() => { window.location.href = tujuan; }, 500);
+                        } else {
+                            alert("❌ Password salah! Silakan coba lagi.");
+                            resetTombol();
+                        }
+                    } else {
+                        // Cek apakah dia nyasar ke role sebelah
+                        const otherRole = currentRole === 'mhs' ? 'dsn' : 'mhs';
+                        const otherPath = `users/${otherRole}/${inputID}`;
+                        const otherSnapshot = await get(ref(db, otherPath));
+
+                        if (otherSnapshot.exists()) {
+                            alert(`⚠️ Akun tidak ditemukan di role ini, tapi terdaftar sebagai ${otherRole === 'mhs' ? 'MAHASISWA' : 'DOSEN'}. Silakan ganti pilihan role di atas!`);
+                        } else {
+                            alert("❌ Akun tidak ditemukan! Silakan daftar terlebih dahulu.");
+                        }
+                        resetTombol();
+                    }
+
                 } else {
-                    alert(result.message);
+                    // ==============================
+                    // LOGIKA REGISTER (SIMPAN KE FIREBASE)
+                    // ==============================
+                    const inputNama = document.getElementById('user-name').value.trim();
+                    const inputPasswordConfirm = document.getElementById('user-pass-confirm').value;
+                    
+                    if (!inputNama) return alert("Harap masukkan nama lengkap!"), resetTombol();
+                    if (inputPassword.length < 4) return alert("Password minimal 4 karakter!"), resetTombol();
+                    if (inputPassword !== inputPasswordConfirm) return alert("Password tidak cocok!"), resetTombol();
+                    
+                    // Cek apakah ID udah dipakai
+                    const dbPath = `users/${currentRole}/${inputID}`;
+                    const snapshot = await get(ref(db, dbPath));
+
+                    if (snapshot.exists()) {
+                        alert("❌ ID ini sudah terdaftar! Silakan kembali ke menu Masuk.");
+                        resetTombol();
+                        return;
+                    }
+
+                    // Kalau aman, simpan ke Firebase
+                    await set(ref(db, dbPath), {
+                        nama: inputNama,
+                        password_hash: simpleHash(inputPassword),
+                        waktu_daftar: Date.now()
+                    });
+
+                    alert("🎉 Pendaftaran berhasil! Silakan login dengan password Anda.");
+                    window.toggleMode(); 
+                    document.getElementById('user-pass').value = ''; 
+                    document.getElementById('user-pass-confirm').value = '';
+                    document.getElementById('user-name').value = '';
+                    resetTombol();
                 }
+            } catch (error) {
+                console.error("Auth Error:", error);
+                alert("Terjadi kesalahan koneksi ke server. Coba lagi nanti.");
+                resetTombol();
             }
-            
-        } else {
-            // ========== REGISTER MODE ==========
-            const inputNama = document.getElementById('user-name').value.trim();
-            const inputPasswordConfirm = document.getElementById('user-pass-confirm').value;
-            
-            // Validasi input
-            if (!inputNama) {
-                alert("Harap masukkan nama lengkap!");
-                return;
+
+            function resetTombol() {
+                btnSubmit.innerText = teksAsliTombol;
+                btnSubmit.disabled = false;
+                btnSubmit.classList.remove('opacity-70', 'cursor-wait');
             }
-            
-            if (inputPassword.length < 4) {
-                alert("Password minimal 4 karakter untuk keamanan!");
-                return;
-            }
-            
-            if (inputPassword !== inputPasswordConfirm) {
-                alert("Password dan konfirmasi password tidak cocok!");
-                return;
-            }
-            
-            // Proses registrasi
-            const result = registerUser(inputID, inputNama, inputPassword, currentRole);
-            
-            if (result.success) {
-                alert(result.message + " Silakan login dengan password Anda.");
-                toggleMode(); // Balik ke mode login
-                document.getElementById('user-pass').value = ''; // Kosongkan form password
-                document.getElementById('user-pass-confirm').value = '';
-                document.getElementById('user-name').value = '';
-            } else {
-                alert(result.message);
-            }
-        }
-    }
-    
-    // Initial: Pastikan field konfirmasi password tersembunyi di awal
-    document.getElementById('field-konfirmasi-pass').classList.add('hidden');
+        };
     </script>
 </body>
 </html>
